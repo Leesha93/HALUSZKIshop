@@ -1,0 +1,3363 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haluszki Shop - Dinosaur Selector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d4a358;
+            --primary-dark: #c4924a;
+            --bg-dark: #1a1510;
+            --card-bg: #2a221a;
+            --text-cream: #f5f5f5;
+            --text-muted: #a68d60;
+            --accent-red: #8b2c2c;
+            --ribbon-dark: #3d2b1f;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-cream);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(212, 163, 88, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(212, 163, 88, 0.03) 0%, transparent 40%);
+        }
+        .glass {
+            background: rgba(42, 34, 26, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 163, 88, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(26, 21, 16, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+            border-radius: 10px;
+        }
+        [v-cloak] { display: none; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #1a1510;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(212, 163, 88, 0.4);
+        }
+        .logo-glow { filter: drop-shadow(0 0 15px rgba(212, 163, 88, 0.2)); }
+        .mut-checkbox-inline {
+            display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 8px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(212, 163, 88, 0.1);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s ease; user-select: none;
+        }
+        .mut-checkbox-inline:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(212, 163, 88, 0.3); }
+        .mut-checkbox-inline.active { background: var(--primary); border-color: var(--primary); color: #1a1510; }
+        .glass-stat {
+            background: rgba(42, 34, 26, 0.4);
+            border: 1px solid rgba(212, 163, 88, 0.1);
+            transition: all 0.3s ease;
+        }
+        .checkbox-box-small {
+            width: 16px; height: 16px; border: 2px solid rgba(212, 163, 88, 0.3);
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 8px; font-weight: 900;
+        }
+        .mut-checkbox-inline.active .checkbox-box-small { border-color: #1a1510; }
+        .checkbox-box {
+            width: 18px; height: 18px; border: 2px solid rgba(212, 163, 88, 0.4);
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .active .checkbox-box { border-color: rgba(26, 21, 16, 0.6); background: rgba(26, 21, 16, 0.1); }
+    </style>
+</head>
+<body class="antialiased font-medium">
+    <div id="app" v-cloak class="min-h-screen flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-80 glass border-r border-[#3d2b1f] flex flex-col h-screen sticky top-0 z-50">
+            <div class="p-6 border-b border-[#3d2b1f]">
+                <div class="flex flex-col items-center mb-6">
+                    <img src="raw.png" alt="Haluszki Shop" class="w-48 logo-glow mb-2">
+                    <p class="text-[10px] text-primary uppercase tracking-[0.3em] font-black opacity-60 text-center">Professional Breeding Store</p>
+                </div>
+                <div class="mt-4 relative">
+                    <input type="text" v-model="searchQuery" placeholder="Szukaj stworzenia..." class="w-full bg-[#1a1510]/50 border border-[#d4a358]/20 rounded-xl py-3 px-4 pl-11 focus:outline-none focus:ring-2 focus:ring-[#d4a358]/50 text-sm transition-all focus:bg-[#1a1510] text-cream">
+                    <i data-lucide="search" class="absolute left-4 top-3.5 w-4 h-4 text-primary opacity-50"></i>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+                <transition-group name="dino-list">
+                    <div v-for="dino in filteredDinos" :key="dino.name" @click="selectDino(dino.name)" :class="['group p-4 rounded-xl cursor-pointer transition-all flex items-center gap-4 border', selectedDinoName === dino.name ? 'bg-[#d4a358]/10 border-[#d4a358]/30 text-[#d4a358]' : 'hover:bg-white/5 border-transparent text-[#a68d60] hover:text-[#f5f5f5]']">
+                        <div :class="['w-14 h-14 rounded-xl flex items-center justify-center transition-all overflow-hidden border-2', selectedDinoName === dino.name ? 'border-[#d4a358] bg-[#d4a358]/20 shadow-[0_0_15px_rgba(212,163,88,0.2)]' : 'border-[#3d2b1f] bg-[#1a1510]']">
+                            <img v-if="getDinoImg(dino.name)" :src="'ico/' + getDinoImg(dino.name)" class="w-12 h-12 object-contain transform group-hover:scale-110 transition-transform">
+                            <i v-else data-lucide="help-circle" class="w-6 h-6 opacity-20"></i>
+                        </div>
+                            <div class="flex-1 overflow-hidden">
+                                <div class="font-black text-sm truncate uppercase tracking-tight leading-none mb-1">{{ dino.name }}</div>
+                                <div class="text-[9px] flex items-center gap-2">
+                                    <span class="uppercase tracking-widest font-bold opacity-60">{{ translateType(dino.typ) }}</span>
+                                    <span v-if="hasMutations(dino)" class="flex items-center gap-1 text-[#d4a358] font-black">
+                                        <span class="w-1 h-1 bg-[#d4a358]/40 rounded-full"></span>
+                                        <i data-lucide="dna" class="w-3 h-3"></i>
+                                        <span class="uppercase text-[8px] tracking-tighter">Mutacje</span>
+                                    </span>
+                                </div>
+                            </div>
+                    </div>
+                </transition-group>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-12 overflow-y-auto custom-scrollbar relative">
+            <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-10">
+                <div class="flex flex-col lg:flex-row gap-10 items-start">
+                    <div class="w-full lg:w-2/5 group">
+                        <div class="aspect-square glass rounded-3xl overflow-hidden relative flex items-center justify-center border-2 border-[#d4a358]/20 group-hover:border-[#d4a358]/40 transition-all duration-500 shadow-2xl">
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(212,163,88,0.1),transparent)]"></div>
+                            <img v-if="getDinoImg(selectedDinoName)" :src="'ico/' + getDinoImg(selectedDinoName)" class="w-64 h-64 object-contain z-10 drop-shadow-2xl transform group-hover:scale-110 transition-all duration-700">
+                            <i v-else data-lucide="help-circle" class="w-40 h-40 opacity-5"></i>
+                            <div class="absolute bottom-8 left-8 right-8 z-20">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-0.5 rounded bg-[#d4a358]/20 text-[#d4a358] text-[10px] font-black tracking-[0.2em] uppercase border border-[#d4a358]/30">{{ translateType(selectedDino.typ) }}</span>
+                                    <span v-if="selectedDinoDLC" class="px-2 py-0.5 rounded bg-amber-900/40 text-amber-500 text-[10px] font-black tracking-[0.21em] uppercase border border-amber-500/30 whitespace-nowrap">{{ translateDLC(selectedDinoDLC) }}</span>
+                                </div>
+                                <h2 class="font-black text-white tracking-tighter uppercase leading-none drop-shadow-lg whitespace-nowrap" :style="{ fontSize: dinoNameFontSize }">{{ selectedDinoName }}</h2>
+                            </div>
+                        </div>
+                        <div class="mt-6 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="glass p-5 rounded-2xl border-l-4 border-[#d4a358] relative flex flex-col justify-center items-center text-center">
+                                    <label class="text-[10px] text-[#a68d60] uppercase font-black tracking-widest block mb-1">Poziom Całkowity (LVL)</label>
+                                    <div class="text-4xl font-black text-white leading-none">{{ calculatedLevel }}</div>
+                                    <div v-if="isKastratActive" class="text-xs text-red-500 font-black uppercase tracking-[0.2em] mt-2 border-t border-red-500/20 pt-2 animate-pulse w-full">KASTRAT</div>
+                                    <div class="text-[9px] text-[#d4a358]/60 mt-2 uppercase font-bold" v-if="baseLevel">Baza: {{ baseLevel }} + Mutacje: {{ selectionMutationTotal }}</div>
+                                </div>
+                                <div class="glass p-5 rounded-2xl border-l-4 border-amber-600 relative overflow-hidden flex flex-col justify-center text-center">
+                                    <template v-if="bestMatchVariant">
+                                        <label class="text-[10px] text-[#a68d60] uppercase font-black tracking-widest block mb-1">Cena</label>
+                                        <div class="text-4xl font-black text-amber-400 leading-none">
+                                            {{ displayPrice.final }} 
+                                            <span class="text-sm font-bold text-[#a68d60] ml-1">DD</span>
+                                        </div>
+                                        <div class="text-[8px] text-emerald-500/60 mt-1 uppercase font-bold">Stała cena z katalogu</div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <div class="text-[9px] text-[#d4a358]/60 uppercase font-black mb-1">Cena Minimalna</div>
+                                                <div class="text-3xl font-black text-white leading-none">
+                                                    {{ displayPrice.min }} <span class="text-xs font-bold text-[#a68d60]">DD</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="text-[9px] text-[#a68d60] uppercase font-black mb-1">Cena Sugerowana</div>
+                                                <div class="text-2xl font-black text-amber-400/80 leading-none">
+                                                    {{ displayPrice.sug }} <span class="text-xs font-bold text-[#a68d60]">DD</span>
+                                                </div>
+                                            </div>
+                                            <div class="text-[8px] text-[#a68d60] mt-1 opacity-60 uppercase font-bold">Cena bazowa: {{ pricingInfo.baseSpeciesPrice }} DD</div>
+                                        </div>
+                                    </template>
+                                    <div v-if="isKastratSelected" class="text-[8px] text-red-500/80 font-black uppercase mt-2">-20% Zrabatowano </div>
+                                </div>
+                            </div>
+
+                            <!-- Variant & Kastrat Controls Integrated -->                            <div class="glass p-4 rounded-2xl space-y-4">
+                                <div v-if="baseVariants.length > 1">
+                                    <label class="text-[9px] text-[#a68d60] uppercase font-black tracking-widest block mb-2 text-center">Wybierz Bazę (LVL):</label>
+                                    <div class="flex flex-wrap gap-2 justify-center">
+                                        <button v-for="(v, idx) in baseVariants" :key="idx" 
+                                                @click="preferredBaseIndex = idx"
+                                                class="px-3 py-1.5 rounded-lg text-[10px] font-black border-2 transition-all duration-300"
+                                                :class="preferredBaseIndex === idx ? 'bg-[#d4a358] border-[#d4a358] text-black shadow-[0_0_15px_rgba(212,163,88,0.3)]' : 'bg-transparent border-[#d4a358]/30 text-[#d4a358] hover:border-[#d4a358]'">
+                                            {{ v.LVL }}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-center pt-2">
+                                    <button @click="toggleKastrat" 
+                                            :disabled="isKastratRequired"
+                                            class="flex items-center gap-3 px-4 py-2 rounded-xl border-2 transition-all duration-300 group"
+                                            :class="{
+                                                'bg-[#d4a358] border-[#d4a358] text-black shadow-[0_0_15px_rgba(212,163,88,0.2)]': isKastratSelected && !isKastratRequired,
+                                                'bg-transparent border-[#d4a358]/30 text-[#d4a358] hover:border-[#d4a358]': !isKastratSelected && !isKastratRequired,
+                                                'bg-white/5 border-white/10 text-white/20 grayscale pointer-events-none': isKastratRequired
+                                            }">
+                                        <div class="w-5 h-5 rounded flex items-center justify-center border-2 transition-all"
+                                             :class="isKastratSelected ? 'border-current' : 'border-current opacity-40'">
+                                            <span v-if="isKastratSelected" class="text-xs font-black">X</span>
+                                        </div>
+                                        <div class="flex flex-col items-start leading-none text-left">
+                                            <span class="text-[10px] font-black uppercase tracking-widest">{{ (isKastratRequired || bestMatchVariant?.KASTRAT) ? 'Kastracja Wymagana' : 'Kupno jako kastrat' }}</span>
+                                            <span v-if="!isKastratRequired" class="text-[8px] font-bold opacity-70 mt-0.5 uppercase">Rabat -20% </span>
+                                            <span v-else class="text-[8px] font-bold opacity-40 mt-0.5 uppercase">Brak rabatu (Skonfigurowany kastrat)</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full space-y-8">
+
+                        <div class="glass p-6 rounded-3xl border border-[#d4a358]/20 bg-gradient-to-br from-[#2a221a] to-[#1a1510]">
+                            <h3 class="text-xl font-black uppercase tracking-wider mb-8 flex items-center gap-3"><i data-lucide="dna" class="text-primary w-6 h-6"></i>STATYSTYKI I MUTACJE</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                <div v-for="stat in mainStats" :key="stat.key" class="glass-stat p-6 rounded-2xl border border-white/5 flex flex-col justify-between hover:border-white/10 transition-colors">
+                                    <div class="mb-6">
+                                        <div class="flex flex-col gap-1 mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <i :data-lucide="stat.icon" class="w-4 h-4 opacity-70" :style="{ color: stat.color }"></i>
+                                                <span class="text-[10px] uppercase font-black tracking-[0.2em] text-[#a68d60]">{{ stat.label }}</span>
+                                            </div>
+                                            <div class="text-white font-black text-4xl leading-none tracking-tighter">{{ getStatValue(stat).base }}</div>
+                                        </div>
+                                        <div v-if="getStatValue(stat).mut > 0" class="text-[10px] text-[#d4a358] font-black uppercase tracking-tighter bg-[#d4a358]/10 py-1 px-2 rounded inline-block">
+                                            +{{ getStatValue(stat).mut }} MUTACJE ({{ getStatValue(stat).sum }})
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div v-for="val in availableMutations(stat.key)" :key="val" @click="toggleMutation(stat.key, val)" :class="['mut-checkbox-inline', selectedMutations[stat.mutKey] === val ? 'active' : '']">
+                                            <div class="checkbox-box-small flex-shrink-0"><span v-if="selectedMutations[stat.mutKey] === val">X</span></div>
+                                            <div class="text-[13px] font-black uppercase tracking-tight flex-1 flex flex-wrap justify-center items-center gap-x-1 text-center leading-tight">
+                                                <span>+{{ val }} PKT</span>
+                                                <span class="opacity-60 font-bold" v-if="getMutationCost(val) > 0">[+{{ getMutationCost(val) }} DD]</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!bestMatchVariant" class="p-4 rounded-2xl bg-red-900/20 border border-red-500/30 text-red-500 text-xs font-bold text-center">Uwaga: Wybrana kombinacja statystyk nie jest dostępna jako stały wariant. Skontaktuj się ze sprzedawcą w celu wyceny indywidualnej.</div>
+                        <div v-else class="p-4 rounded-2xl bg-emerald-900/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>Wariant dostępny w ciągu 2-12h
+                            <span v-if="bestMatchVariant.KASTRAT" class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px] ml-2 font-black uppercase tracking-widest">KASTRAT</span>
+                        </div>
+                        <div class="pt-6 flex flex-col sm:flex-row gap-4">
+                            <button @click="copyOrder" class="btn-primary flex-1 py-5 px-8 rounded-2xl font-black text-[#1a1510] flex items-center justify-center gap-3 uppercase tracking-widest text-sm shadow-xl disabled:opacity-30 disabled:cursor-not-allowed"><i data-lucide="clipboard-list" class="w-5 h-5"></i>Kopiuj Zamówienie</button>
+                            <button @click="resetFilters" class="glass py-5 px-8 rounded-2xl font-black text-cream flex items-center justify-center gap-3 hover:bg-white/5 transition-colors uppercase tracking-widest text-sm border-2 border-[#d4a358]/20"><i data-lucide="rotate-ccw" class="w-5 h-5"></i>Resetuj</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-else class="h-full flex flex-col items-center justify-center mt-20 md:mt-0 px-6">
+                <div class="w-64 h-64 bg-[#d4a358]/5 rounded-full flex items-center justify-center relative mb-12 border-2 border-dashed border-[#d4a358]/10"><img src="raw.png" class="w-48 opacity-20 grayscale brightness-200"></div>
+                <h3 class="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Wybierz Stworzenie</h3>
+
+            </div>
+            <div v-if="toast.show" class="fixed bottom-10 right-10 bg-[#d4a358] text-[#1a1510] px-8 py-4 rounded-2xl flex items-center gap-4 z-50 shadow-2xl border-2 border-white/20"><i data-lucide="check-circle-2" class="w-6 h-6"></i><span class="font-black uppercase tracking-widest text-sm">{{ toast.message }}</span></div>
+        </main>
+    </div>
+
+    <script id="ark-data" type="application/json">
+[
+    {
+        "LVL":  "873",
+        "HP":  "140",
+        "mut DMG":  "",
+        "WH":  "149",
+        "mut OX":  "",
+        "FOOD":  "155",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "142",
+        "DINEK":  "ANDREWSARCHUS-S",
+        "STAM":  "139",
+        "DLC":  "",
+        "DMG":  "147",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1265",
+        "HP":  "140",
+        "mut DMG":  "98",
+        "WH":  "149",
+        "mut OX":  "",
+        "FOOD":  "155",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "13 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "142",
+        "DINEK":  "ANDREWSARCHUS-S",
+        "STAM":  "139",
+        "DLC":  "",
+        "DMG":  "147",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1893",
+        "HP":  "140",
+        "mut DMG":  "255",
+        "WH":  "149",
+        "mut OX":  "",
+        "FOOD":  "155",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "19 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "142",
+        "DINEK":  "ANDREWSARCHUS-S",
+        "STAM":  "139",
+        "DLC":  "",
+        "DMG":  "147",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "700",
+        "HP":  "117",
+        "mut DMG":  "",
+        "WH":  "160",
+        "mut OX":  "",
+        "FOOD":  "129",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 900",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "ANGLERFISH",
+        "STAM":  "144",
+        "DLC":  "",
+        "DMG":  "149",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "745",
+        "HP":  "114",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "130",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "106",
+        "DINEK":  "ANKYLOSAURUS-S",
+        "STAM":  "123",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "773",
+        "HP":  "152",
+        "mut DMG":  "",
+        "WH":  "160",
+        "mut OX":  "",
+        "FOOD":  "142",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "ARCHELON",
+        "STAM":  "157",
+        "DLC":  "",
+        "DMG":  "161",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "774",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "144",
+        "mut OX":  "",
+        "FOOD":  "98",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "116",
+        "DINEK":  "ARGENTAVIS",
+        "STAM":  "153",
+        "DLC":  "",
+        "DMG":  "130",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "750",
+        "HP":  "141",
+        "mut DMG":  "",
+        "WH":  "125",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "110",
+        "DINEK":  "AURELIAX",
+        "STAM":  "126",
+        "DLC":  "LC",
+        "DMG":  "131",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "768",
+        "HP":  "158",
+        "mut DMG":  "",
+        "WH":  "152",
+        "mut OX":  "",
+        "FOOD":  "137",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "BARYONYX",
+        "STAM":  "166",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "824",
+        "HP":  "160",
+        "mut DMG":  "",
+        "WH":  "173",
+        "mut OX":  "",
+        "FOOD":  "147",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "BASILISK",
+        "STAM":  "165",
+        "DLC":  "",
+        "DMG":  "178",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1216",
+        "HP":  "160",
+        "mut DMG":  "98",
+        "WH":  "173",
+        "mut OX":  "",
+        "FOOD":  "147",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "14 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "",
+        "DINEK":  "BASILISK",
+        "STAM":  "165",
+        "DLC":  "",
+        "DMG":  "178",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1464",
+        "HP":  "160",
+        "mut DMG":  "160",
+        "WH":  "173",
+        "mut OX":  "",
+        "FOOD":  "147",
+        "mut WH":  "160",
+        "mut STAM":  "160",
+        "CENA":  "16 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "",
+        "DINEK":  "BASILISK",
+        "STAM":  "165",
+        "DLC":  "",
+        "DMG":  "178",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1844",
+        "HP":  "160",
+        "mut DMG":  "255",
+        "WH":  "173",
+        "mut OX":  "",
+        "FOOD":  "147",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "19 200",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "",
+        "DINEK":  "BASILISK",
+        "STAM":  "165",
+        "DLC":  "",
+        "DMG":  "178",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "771",
+        "HP":  "155",
+        "mut DMG":  "",
+        "WH":  "163",
+        "mut OX":  "",
+        "FOOD":  "146",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 750",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "BASILOSAURUS",
+        "STAM":  "152",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "758",
+        "HP":  "161",
+        "mut DMG":  "",
+        "WH":  "170",
+        "mut OX":  "",
+        "FOOD":  "131",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "BEELZEBUFO",
+        "STAM":  "140",
+        "DLC":  "",
+        "DMG":  "155",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "792",
+        "HP":  "146",
+        "mut DMG":  "",
+        "WH":  "139",
+        "mut OX":  "",
+        "FOOD":  "132",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "110",
+        "DINEK":  "BISON",
+        "STAM":  "125",
+        "DLC":  "",
+        "DMG":  "139",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "749",
+        "HP":  "129",
+        "mut DMG":  "",
+        "WH":  "127",
+        "mut OX":  "",
+        "FOOD":  "112",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "BRONTOSAURUS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "134",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "739",
+        "HP":  "128",
+        "mut DMG":  "",
+        "WH":  "115",
+        "mut OX":  "",
+        "FOOD":  "107",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "124",
+        "DINEK":  "CARCHARODONTOSAURUS",
+        "STAM":  "129",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "815",
+        "HP":  "143",
+        "mut DMG":  "",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "12 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "124",
+        "DINEK":  "CARCHARODONTOSAURUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1207",
+        "HP":  "143",
+        "mut DMG":  "98",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "22 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "124",
+        "DINEK":  "CARCHARODONTOSAURUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1325",
+        "HP":  "143",
+        "mut DMG":  "255",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "20 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "124",
+        "DINEK":  "CARCHARODONTOSAURUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1835",
+        "HP":  "143",
+        "mut DMG":  "255",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "31 700",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "124",
+        "DINEK":  "CARCHARODONTOSAURUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "732",
+        "HP":  "126",
+        "mut DMG":  "",
+        "WH":  "119",
+        "mut OX":  "",
+        "FOOD":  "110",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "10 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "121",
+        "DINEK":  "CARCHARODONTOSAURUS-S",
+        "STAM":  "111",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "873",
+        "HP":  "146",
+        "mut DMG":  "",
+        "WH":  "149",
+        "mut OX":  "",
+        "FOOD":  "139",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "145",
+        "DINEK":  "CASTROIDES",
+        "STAM":  "145",
+        "DLC":  "",
+        "DMG":  "148",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "766",
+        "HP":  "118",
+        "mut DMG":  "",
+        "WH":  "131",
+        "mut OX":  "",
+        "FOOD":  "130",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "126",
+        "DINEK":  "CAT",
+        "STAM":  "135",
+        "DLC":  "",
+        "DMG":  "125",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "777",
+        "HP":  "143",
+        "mut DMG":  "",
+        "WH":  "121",
+        "mut OX":  "",
+        "FOOD":  "145",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 300",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "118",
+        "DINEK":  "DAEDON",
+        "STAM":  "114",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1267",
+        "HP":  "143",
+        "mut DMG":  "98",
+        "WH":  "121",
+        "mut OX":  "",
+        "FOOD":  "145",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "8 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "98",
+        "mut HP":  "98",
+        "OX":  "118",
+        "DINEK":  "DAEDON",
+        "STAM":  "114",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "2052",
+        "HP":  "143",
+        "mut DMG":  "255",
+        "WH":  "121",
+        "mut OX":  "",
+        "FOOD":  "145",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "12 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "255",
+        "mut HP":  "255",
+        "OX":  "118",
+        "DINEK":  "DAEDON",
+        "STAM":  "114",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "832",
+        "HP":  "145",
+        "mut DMG":  "",
+        "WH":  "143",
+        "mut OX":  "",
+        "FOOD":  "123",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "129",
+        "DINEK":  "DAEDON-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1224",
+        "HP":  "145",
+        "mut DMG":  "98",
+        "WH":  "143",
+        "mut OX":  "",
+        "FOOD":  "123",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "17 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "129",
+        "DINEK":  "DAEDON-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1472",
+        "HP":  "145",
+        "mut DMG":  "160",
+        "WH":  "143",
+        "mut OX":  "",
+        "FOOD":  "123",
+        "mut WH":  "160",
+        "mut STAM":  "160",
+        "CENA":  "19 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "129",
+        "DINEK":  "DAEDON-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1852",
+        "HP":  "145",
+        "mut DMG":  "255",
+        "WH":  "143",
+        "mut OX":  "",
+        "FOOD":  "123",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "23 700",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "129",
+        "DINEK":  "DAEDON-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "154",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "723",
+        "HP":  "134",
+        "mut DMG":  "",
+        "WH":  "105",
+        "mut OX":  "",
+        "FOOD":  "112",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "112",
+        "DINEK":  "DEINOTHERIUM",
+        "STAM":  "125",
+        "DLC":  "",
+        "DMG":  "134",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "785",
+        "HP":  "143",
+        "mut DMG":  "",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "110",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "5 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "122",
+        "DINEK":  "DESMODUS-S",
+        "STAM":  "132",
+        "DLC":  "",
+        "DMG":  "139",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "768",
+        "HP":  "135",
+        "mut DMG":  "",
+        "WH":  "135",
+        "mut OX":  "",
+        "FOOD":  "105",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "116",
+        "DINEK":  "DIRE BEAR ABERRANT",
+        "STAM":  "142",
+        "DLC":  "",
+        "DMG":  "134",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "734",
+        "HP":  "127",
+        "mut DMG":  "",
+        "WH":  "124",
+        "mut OX":  "",
+        "FOOD":  "120",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "123",
+        "DINEK":  "DIREWOLF",
+        "STAM":  "113",
+        "DLC":  "",
+        "DMG":  "126",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "736",
+        "HP":  "125",
+        "mut DMG":  "",
+        "WH":  "127",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "109",
+        "DINEK":  "DOEDICURUS-S",
+        "STAM":  "130",
+        "DLC":  "",
+        "DMG":  "128",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "746",
+        "HP":  "141",
+        "mut DMG":  "",
+        "WH":  "125",
+        "mut OX":  "",
+        "FOOD":  "107",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "DRAKELING",
+        "STAM":  "122",
+        "DLC":  "FT",
+        "DMG":  "137",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "942",
+        "HP":  "141",
+        "mut DMG":  "98",
+        "WH":  "125",
+        "mut OX":  "",
+        "FOOD":  "107",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "113",
+        "DINEK":  "DRAKELING",
+        "STAM":  "122",
+        "DLC":  "FT",
+        "DMG":  "137",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "784",
+        "HP":  "141",
+        "mut DMG":  "",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "20 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "118",
+        "DINEK":  "DREADMARE",
+        "STAM":  "130",
+        "DLC":  "FT",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1176",
+        "HP":  "141",
+        "mut DMG":  "98",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "43 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "118",
+        "DINEK":  "DREADMARE",
+        "STAM":  "130",
+        "DLC":  "FT",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1424",
+        "HP":  "141",
+        "mut DMG":  "160",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "160",
+        "mut STAM":  "160",
+        "CENA":  "51 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "118",
+        "DINEK":  "DREADMARE",
+        "STAM":  "130",
+        "DLC":  "FT",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1804",
+        "HP":  "141",
+        "mut DMG":  "255",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "62 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "118",
+        "DINEK":  "DREADMARE",
+        "STAM":  "130",
+        "DLC":  "FT",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "801",
+        "HP":  "134",
+        "mut DMG":  "",
+        "WH":  "135",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "15 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "117",
+        "DINEK":  "DREADNOUGHTUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "146",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1193",
+        "HP":  "134",
+        "mut DMG":  "98",
+        "WH":  "135",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "29 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "117",
+        "DINEK":  "DREADNOUGHTUS",
+        "STAM":  "146",
+        "DLC":  "",
+        "DMG":  "146",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "743",
+        "HP":  "153",
+        "mut DMG":  "",
+        "WH":  "145",
+        "mut OX":  "",
+        "FOOD":  "143",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "5 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "DUNKLEOSTEUS - S",
+        "STAM":  "150",
+        "DLC":  "",
+        "DMG":  "151",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "450",
+        "HP":  "74",
+        "mut DMG":  "",
+        "WH":  "78",
+        "mut OX":  "",
+        "FOOD":  "64",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 900",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "72",
+        "DINEK":  "FASOLOZUCHUS",
+        "STAM":  "68",
+        "DLC":  "",
+        "DMG":  "93",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "768",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "133",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "15 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "125",
+        "DINEK":  "FASOLOZUCHUS-S",
+        "STAM":  "131",
+        "DLC":  "",
+        "DMG":  "130",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "762",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "130",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "135",
+        "DINEK":  "GASBAG",
+        "STAM":  "117",
+        "DLC":  "",
+        "DMG":  "111",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1056",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "98",
+        "FOOD":  "130",
+        "mut WH":  "98",
+        "mut STAM":  "",
+        "CENA":  "4 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "135",
+        "DINEK":  "GASBAG",
+        "STAM":  "117",
+        "DLC":  "",
+        "DMG":  "111",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1242",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "160",
+        "FOOD":  "130",
+        "mut WH":  "160",
+        "mut STAM":  "",
+        "CENA":  "5 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "135",
+        "DINEK":  "GASBAG",
+        "STAM":  "117",
+        "DLC":  "",
+        "DMG":  "111",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1527",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "255",
+        "FOOD":  "130",
+        "mut WH":  "255",
+        "mut STAM":  "",
+        "CENA":  "6 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "135",
+        "DINEK":  "GASBAG",
+        "STAM":  "117",
+        "DLC":  "",
+        "DMG":  "111",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "733",
+        "HP":  "134",
+        "mut DMG":  "",
+        "WH":  "104",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "125",
+        "DINEK":  "GIGANOTORAPTOR",
+        "STAM":  "121",
+        "DLC":  "",
+        "DMG":  "137",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "772",
+        "HP":  "131",
+        "mut DMG":  "",
+        "WH":  "151",
+        "mut OX":  "",
+        "FOOD":  "102",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "114",
+        "DINEK":  "GIGANOTOSAURUS",
+        "STAM":  "138",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1066",
+        "HP":  "131",
+        "mut DMG":  "98",
+        "WH":  "151",
+        "mut OX":  "",
+        "FOOD":  "102",
+        "mut WH":  "98",
+        "mut STAM":  "",
+        "CENA":  "14 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "114",
+        "DINEK":  "GIGANOTOSAURUS",
+        "STAM":  "138",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "850",
+        "HP":  "145",
+        "mut DMG":  "",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "142",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "141",
+        "DINEK":  "GLOON",
+        "STAM":  "140",
+        "DLC":  "LC",
+        "DMG":  "141",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "779",
+        "HP":  "121",
+        "mut DMG":  "",
+        "WH":  "146",
+        "mut OX":  "",
+        "FOOD":  "125",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "127",
+        "DINEK":  "GLOWTAIL",
+        "STAM":  "132",
+        "DLC":  "",
+        "DMG":  "127",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "824",
+        "HP":  "142",
+        "mut DMG":  "",
+        "WH":  "150",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "122",
+        "DINEK":  "GRIFFIN - S",
+        "STAM":  "148",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1216",
+        "HP":  "142",
+        "mut DMG":  "98",
+        "WH":  "150",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "13 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "122",
+        "DINEK":  "GRIFFIN - S",
+        "STAM":  "148",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1464",
+        "HP":  "142",
+        "mut DMG":  "160",
+        "WH":  "150",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "160",
+        "mut STAM":  "160",
+        "CENA":  "15 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "122",
+        "DINEK":  "GRIFFIN - S",
+        "STAM":  "148",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1844",
+        "HP":  "142",
+        "mut DMG":  "255",
+        "WH":  "150",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "18 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "122",
+        "DINEK":  "GRIFFIN - S",
+        "STAM":  "148",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "741",
+        "HP":  "164",
+        "mut DMG":  "",
+        "WH":  "153",
+        "mut OX":  "",
+        "FOOD":  "136",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 550",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "HESPERONIS",
+        "STAM":  "138",
+        "DLC":  "",
+        "DMG":  "149",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "726",
+        "HP":  "123",
+        "mut DMG":  "",
+        "WH":  "123",
+        "mut OX":  "",
+        "FOOD":  "112",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "850",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "104",
+        "DINEK":  "JERBOA",
+        "STAM":  "125",
+        "DLC":  "",
+        "DMG":  "138",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "803",
+        "HP":  "163",
+        "mut DMG":  "",
+        "WH":  "167",
+        "mut OX":  "",
+        "FOOD":  "142",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "KARKINOS",
+        "STAM":  "161",
+        "DLC":  "",
+        "DMG":  "169",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "779",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "134",
+        "mut OX":  "",
+        "FOOD":  "115",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "127",
+        "DINEK":  "MAEVING-S",
+        "STAM":  "134",
+        "DLC":  "",
+        "DMG":  "136",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "801",
+        "HP":  "141",
+        "mut DMG":  "",
+        "WH":  "133",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "125",
+        "DINEK":  "MAMMOTH",
+        "STAM":  "142",
+        "DLC":  "",
+        "DMG":  "148",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "771",
+        "HP":  "134",
+        "mut DMG":  "",
+        "WH":  "135",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 300",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "110",
+        "DINEK":  "MANAGARMR",
+        "STAM":  "134",
+        "DLC":  "",
+        "DMG":  "139",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "738",
+        "HP":  "125",
+        "mut DMG":  "",
+        "WH":  "108",
+        "mut OX":  "",
+        "FOOD":  "119",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "122",
+        "DINEK":  "MANAGARMR-S",
+        "STAM":  "132",
+        "DLC":  "",
+        "DMG":  "131",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "775",
+        "HP":  "137",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "106",
+        "DINEK":  "MANTIS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "971",
+        "HP":  "137",
+        "mut DMG":  "98",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "106",
+        "DINEK":  "MANTIS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "1095",
+        "HP":  "137",
+        "mut DMG":  "160",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "160",
+        "OX":  "106",
+        "DINEK":  "MANTIS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "1285",
+        "HP":  "137",
+        "mut DMG":  "255",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "106",
+        "DINEK":  "MANTIS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "1795",
+        "HP":  "137",
+        "mut DMG":  "255",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "12 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "106",
+        "DINEK":  "MANTIS",
+        "STAM":  "133",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "791",
+        "HP":  "131",
+        "mut DMG":  "",
+        "WH":  "141",
+        "mut OX":  "",
+        "FOOD":  "129",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "119",
+        "DINEK":  "MEGALOCEROS",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "133",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "826",
+        "HP":  "140",
+        "mut DMG":  "",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "144",
+        "DINEK":  "MEGALOSAURUS-S",
+        "STAM":  "144",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1218",
+        "HP":  "140",
+        "mut DMG":  "98",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "18 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "144",
+        "DINEK":  "MEGALOSAURUS-S",
+        "STAM":  "144",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1846",
+        "HP":  "140",
+        "mut DMG":  "255",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "27 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "144",
+        "DINEK":  "MEGALOSAURUS-S",
+        "STAM":  "144",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "821",
+        "HP":  "134",
+        "mut DMG":  "",
+        "WH":  "146",
+        "mut OX":  "",
+        "FOOD":  "136",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "120",
+        "DINEK":  "MEGARAPTOR",
+        "STAM":  "149",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "783",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "134",
+        "mut OX":  "",
+        "FOOD":  "120",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "124",
+        "DINEK":  "MEGATHERIUM",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "700",
+        "HP":  "120",
+        "mut DMG":  "",
+        "WH":  "114",
+        "mut OX":  "",
+        "FOOD":  "109",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "112",
+        "DINEK":  "MESOPITEKUS",
+        "STAM":  "114",
+        "DLC":  "",
+        "DMG":  "130",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "752",
+        "HP":  "148",
+        "mut DMG":  "",
+        "WH":  "144",
+        "mut OX":  "",
+        "FOOD":  "158",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "MOSA-S",
+        "STAM":  "148",
+        "DLC":  "",
+        "DMG":  "153",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "844",
+        "HP":  "144",
+        "mut DMG":  "",
+        "WH":  "144",
+        "mut OX":  "",
+        "FOOD":  "116",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "151",
+        "DINEK":  "MOSCHOPS ABBERANT",
+        "STAM":  "145",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "809",
+        "HP":  "144",
+        "mut DMG":  "",
+        "WH":  "142",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "13 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "111",
+        "DINEK":  "OSSIDON-S",
+        "STAM":  "136",
+        "DLC":  "LC",
+        "DMG":  "153",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1201",
+        "HP":  "144",
+        "mut DMG":  "98",
+        "WH":  "142",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "22 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "111",
+        "DINEK":  "OSSIDON-S",
+        "STAM":  "136",
+        "DLC":  "LC",
+        "DMG":  "153",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "800",
+        "HP":  "133",
+        "mut DMG":  "",
+        "WH":  "128",
+        "mut OX":  "",
+        "FOOD":  "140",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "134",
+        "DINEK":  "OTTER",
+        "STAM":  "129",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "824",
+        "HP":  "131",
+        "mut DMG":  "",
+        "WH":  "111",
+        "mut OX":  "",
+        "FOOD":  "110",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "134",
+        "DINEK":  "OVIS",
+        "STAM":  "114",
+        "DLC":  "",
+        "DMG":  "125",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "753",
+        "HP":  "133",
+        "mut DMG":  "",
+        "WH":  "127",
+        "mut OX":  "",
+        "FOOD":  "120",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "PELARGONIS",
+        "STAM":  "127",
+        "DLC":  "",
+        "DMG":  "132",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "740",
+        "HP":  "166",
+        "mut DMG":  "",
+        "WH":  "131",
+        "mut OX":  "",
+        "FOOD":  "153",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "7 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "PLESIOSAUR-S",
+        "STAM":  "138",
+        "DLC":  "",
+        "DMG":  "151",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "512",
+        "HP":  "84",
+        "mut DMG":  "",
+        "WH":  "99",
+        "mut OX":  "",
+        "FOOD":  "82",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "82",
+        "DINEK":  "PYROMANE",
+        "STAM":  "81",
+        "DLC":  "",
+        "DMG":  "83",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "758",
+        "HP":  "130",
+        "mut DMG":  "",
+        "WH":  "119",
+        "mut OX":  "",
+        "FOOD":  "127",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "5 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "117",
+        "DINEK":  "REX",
+        "STAM":  "129",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1150",
+        "HP":  "130",
+        "mut DMG":  "98",
+        "WH":  "119",
+        "mut OX":  "",
+        "FOOD":  "127",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "10 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "117",
+        "DINEK":  "REX",
+        "STAM":  "129",
+        "DLC":  "",
+        "DMG":  "135",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "732",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "108",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "114",
+        "DINEK":  "REX-S",
+        "STAM":  "128",
+        "DLC":  "",
+        "DMG":  "127",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "820",
+        "HP":  "145",
+        "mut DMG":  "",
+        "WH":  "146",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "114",
+        "DINEK":  "REX-S",
+        "STAM":  "150",
+        "DLC":  "",
+        "DMG":  "142",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1212",
+        "HP":  "145",
+        "mut DMG":  "98",
+        "WH":  "146",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "18 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "114",
+        "DINEK":  "REX-S",
+        "STAM":  "150",
+        "DLC":  "",
+        "DMG":  "142",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1840",
+        "HP":  "145",
+        "mut DMG":  "255",
+        "WH":  "146",
+        "mut OX":  "",
+        "FOOD":  "122",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "23 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "114",
+        "DINEK":  "REX-S",
+        "STAM":  "150",
+        "DLC":  "",
+        "DMG":  "142",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "767",
+        "HP":  "133",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "ROCK DRAKE",
+        "STAM":  "136",
+        "DLC":  "",
+        "DMG":  "137",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "815",
+        "HP":  "133",
+        "mut DMG":  "",
+        "WH":  "133",
+        "mut OX":  "",
+        "FOOD":  "129",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "149",
+        "DINEK":  "ROLL RAT",
+        "STAM":  "139",
+        "DLC":  "",
+        "DMG":  "131",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "790",
+        "HP":  "144",
+        "mut DMG":  "",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "SNOW OWL",
+        "STAM":  "139",
+        "DLC":  "",
+        "DMG":  "144",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "748",
+        "HP":  "127",
+        "mut DMG":  "",
+        "WH":  "123",
+        "mut OX":  "",
+        "FOOD":  "113",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "3 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "115",
+        "DINEK":  "SNOW OWL-S",
+        "STAM":  "136",
+        "DLC":  "",
+        "DMG":  "133",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "740",
+        "HP":  "120",
+        "mut DMG":  "",
+        "WH":  "120",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "134",
+        "DINEK":  "TAPEJARA",
+        "STAM":  "125",
+        "DLC":  "",
+        "DMG":  "122",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "700",
+        "HP":  "113",
+        "mut DMG":  "",
+        "WH":  "93",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "1 800",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "116",
+        "DINEK":  "TERROR BIRD",
+        "STAM":  "116",
+        "DLC":  "",
+        "DMG":  "150",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1092",
+        "HP":  "113",
+        "mut DMG":  "98",
+        "WH":  "93",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "4 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "116",
+        "DINEK":  "TERROR BIRD",
+        "STAM":  "116",
+        "DLC":  "",
+        "DMG":  "150",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1720",
+        "HP":  "113",
+        "mut DMG":  "255",
+        "WH":  "93",
+        "mut OX":  "",
+        "FOOD":  "111",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "6 500",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "116",
+        "DINEK":  "TERROR BIRD",
+        "STAM":  "116",
+        "DLC":  "",
+        "DMG":  "150",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "761",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "132",
+        "mut OX":  "",
+        "FOOD":  "118",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "2 400",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "103",
+        "DINEK":  "THERIZINO",
+        "STAM":  "142",
+        "DLC":  "",
+        "DMG":  "133",
+        "typ":  "zbieracz"
+    },
+    {
+        "LVL":  "765",
+        "HP":  "132",
+        "mut DMG":  "",
+        "WH":  "133",
+        "mut OX":  "",
+        "FOOD":  "110",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 700",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "THYLACOLEO",
+        "STAM":  "130",
+        "DLC":  "",
+        "DMG":  "146",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "1059",
+        "HP":  "132",
+        "mut DMG":  "98",
+        "WH":  "133",
+        "mut OX":  "",
+        "FOOD":  "110",
+        "mut WH":  "98",
+        "mut STAM":  "",
+        "CENA":  "9 600",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "113",
+        "DINEK":  "THYLACOLEO",
+        "STAM":  "130",
+        "DLC":  "",
+        "DMG":  "146",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "735",
+        "HP":  "137",
+        "mut DMG":  "",
+        "WH":  "122",
+        "mut OX":  "",
+        "FOOD":  "113",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "107",
+        "DINEK":  "THYLACOLEO-S",
+        "STAM":  "124",
+        "DLC":  "",
+        "DMG":  "131",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "753",
+        "HP":  "149",
+        "mut DMG":  "",
+        "WH":  "143",
+        "mut OX":  "",
+        "FOOD":  "157",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "6 100",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "",
+        "DINEK":  "TUSO",
+        "STAM":  "152",
+        "DLC":  "",
+        "DMG":  "151",
+        "typ":  "wodny"
+    },
+    {
+        "LVL":  "822",
+        "HP":  "148",
+        "mut DMG":  "",
+        "WH":  "139",
+        "mut OX":  "",
+        "FOOD":  "124",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 000",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "127",
+        "DINEK":  "VEILWYN",
+        "STAM":  "143",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "pet"
+    },
+    {
+        "LVL":  "808",
+        "HP":  "142",
+        "mut DMG":  "",
+        "WH":  "132",
+        "mut OX":  "",
+        "FOOD":  "119",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "138",
+        "DINEK":  "WYVERN FIRE-S",
+        "STAM":  "131",
+        "DLC":  "",
+        "DMG":  "145",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "806",
+        "HP":  "155",
+        "mut DMG":  "",
+        "WH":  "140",
+        "mut OX":  "",
+        "FOOD":  "119",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "99",
+        "DINEK":  "WYVERN ICE-S",
+        "STAM":  "149",
+        "DLC":  "",
+        "DMG":  "143",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "803",
+        "HP":  "142",
+        "mut DMG":  "",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "134",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "8 050",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "113",
+        "DINEK":  "WYVERN LIGHTNING-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1195",
+        "HP":  "142",
+        "mut DMG":  "98",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "134",
+        "mut WH":  "98",
+        "mut STAM":  "98",
+        "CENA":  "17 500",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "98",
+        "OX":  "113",
+        "DINEK":  "WYVERN LIGHTNING-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1451",
+        "HP":  "142",
+        "mut DMG":  "162",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "134",
+        "mut WH":  "162",
+        "mut STAM":  "162",
+        "CENA":  "21 000",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "162",
+        "OX":  "113",
+        "DINEK":  "WYVERN LIGHTNING-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "1823",
+        "HP":  "142",
+        "mut DMG":  "255",
+        "WH":  "136",
+        "mut OX":  "",
+        "FOOD":  "134",
+        "mut WH":  "255",
+        "mut STAM":  "255",
+        "CENA":  "25 100",
+        "KASTRAT":  "KASTRAT",
+        "mut FOOD":  "",
+        "mut HP":  "255",
+        "OX":  "113",
+        "DINEK":  "WYVERN LIGHTNING-S",
+        "STAM":  "137",
+        "DLC":  "",
+        "DMG":  "140",
+        "typ":  "latacz"
+    },
+    {
+        "LVL":  "815",
+        "HP":  "138",
+        "mut DMG":  "",
+        "WH":  "138",
+        "mut OX":  "",
+        "FOOD":  "119",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "5 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "133",
+        "DINEK":  "YI LING",
+        "STAM":  "141",
+        "DLC":  "",
+        "DMG":  "145",
+        "typ":  "gryzak"
+    },
+    {
+        "LVL":  "735",
+        "HP":  "139",
+        "mut DMG":  "",
+        "WH":  "120",
+        "mut OX":  "",
+        "FOOD":  "117",
+        "mut WH":  "",
+        "mut STAM":  "",
+        "CENA":  "4 200",
+        "KASTRAT":  "",
+        "mut FOOD":  "",
+        "mut HP":  "",
+        "OX":  "112",
+        "DINEK":  "YUTHYRANUS",
+        "STAM":  "129",
+        "DLC":  "",
+        "DMG":  "117",
+        "typ":  "gryzak"
+    }
+]
+</script>
+    <script id="ico-data" type="application/json">[
+    "Achatina.png",
+    "Allosaurus.png",
+    "Amargasaurus.png",
+    "Ammonite.png",
+    "Andrewsarchus.png",
+    "Anglerfish.png",
+    "Ankylosaurus.png",
+    "Archaeopteryx.webp",
+    "Archelon.avif",
+    "Argentavis.png",
+    "Arthropluera.png",
+    "Astrocetus.png",
+    "Astrodelphis.png",
+    "Baryonyx.webp",
+    "Basilisk.png",
+    "Basilosaurus.png",
+    "Beelzebufo.png",
+    "Bison.webp",
+    "Bloodstalker.png",
+    "Brontosaurus.png",
+    "Bulbdog.png",
+    "Carbonemys.webp",
+    "Carcharodontosaurus.png",
+    "Carnotaurus.png",
+    "Cat.webp",
+    "Ceratosaurus.png",
+    "Chalicotherium.png",
+    "Cnidaria.png",
+    "Compy.png",
+    "DAEDON.png",
+    "Deathworm.png",
+    "Deinonychus.png",
+    "Deinosuchus.png",
+    "Deinotherium.avif",
+    "Desmodus.png",
+    "Dilophosaur.png",
+    "Dimetrodon.png",
+    "Dimorphodon.png",
+    "Dinopithecus.png",
+    "Diplocaulus.png",
+    "Diplodocus.png",
+    "Direwolf.png",
+    "Dire_Bear.webp",
+    "Dodo.png",
+    "Doedicurus.png",
+    "Drakeling.avif",
+    "Dreadmare_Icon.avif",
+    "Dreadnoughtus_Icon.avif",
+    "Dung_Beetle.webp",
+    "Dunkleosteus.png",
+    "Electrophorus.png",
+    "Equus.png",
+    "Eurypterid.png",
+    "Fasolasuchus.png",
+    "FasolasuchusHead_Icon.avif",
+    "Featherlight.png",
+    "Fenrir.png",
+    "Ferox.png",
+    "Ferox_(Large).png",
+    "Fjordhawk.png",
+    "Gacha.png",
+    "Gallimimus.png",
+    "Gasbags.png",
+    "Giant_Beaver.png",
+    "Giant_Bee.png",
+    "Giganotosaurus.png",
+    "Gigantopithecus.png",
+    "Gigantoraptor.png",
+    "Glowbug.png",
+    "Glowtail.png",
+    "Griffin.webp",
+    "Hesperornis.png",
+    "Hyaenodon.png",
+    "Ichthyornis.png",
+    "Ichthyosaurus.png",
+    "Iguanodon.png",
+    "Jerboa.png",
+    "Jug_Bug.png",
+    "Kairuku.png",
+    "Kaprosuchus.png",
+    "Karkinos.png",
+    "Kentrosaurus.png",
+    "Lamprey.png",
+    "Leedsichthys.png",
+    "Liopleurodon.png",
+    "Lymantria.png",
+    "Lystrosaurus.png",
+    "Maewing.png",
+    "Magmasaur.png",
+    "Mammoth.png",
+    "Managarmr.webp",
+    "Manta.png",
+    "Mantis.png",
+    "Megachelon.png",
+    "Megalania.webp",
+    "Megaloceros.png",
+    "Megalodon.png",
+    "Megalosaurus.png",
+    "Meganeura.png",
+    "Megatherium.png",
+    "Mesopithecus.png",
+    "Microraptor.png",
+    "Morellatops.png",
+    "Mosasaurus.png",
+    "Moschops.png",
+    "Nameless.png",
+    "Noglin.png",
+    "Oasisaur.png",
+    "Onyc.png",
+    "ossidon.avif",
+    "Otter.png",
+    "Oviraptor.png",
+    "Ovis.png",
+    "Pachy.png",
+    "Pachyrhinosaurus.png",
+    "Paraceratherium.webp",
+    "Parasaur.png",
+    "Pegomastax.png",
+    "Pelagornis.png",
+    "Phiomia.webp",
+    "Phoenix.png",
+    "Plesiosaur.png",
+    "Procoptodon.png",
+    "Pteranodon.png",
+    "Purlovia.png",
+    "Pyromane.png",
+    "Quetzal.png",
+    "Raptor.png",
+    "Ravager.png",
+    "Reaper.png",
+    "Rex.png",
+    "Rock_Drake.webp",
+    "Rock_Elemental.png",
+    "Roll_Rat.png",
+    "Sabertooth.png",
+    "Sarco.png",
+    "Scorpion.png",
+    "Shadowmane.png",
+    "Shastasaurus.png",
+    "Shinehorn.png",
+    "Sinomacrops.png",
+    "Snow_Owl.png",
+    "Spider.png",
+    "Spino.png",
+    "Stegosaurus.png",
+    "Tapejara.png",
+    "Tek_Stryder.png",
+    "Terror_Bird.png",
+    "Therizinosaur.webp",
+    "Thorny_Dragon.png",
+    "Thylacoleo.webp",
+    "Titanoboa.png",
+    "Titanosaur.png",
+    "Trike.png",
+    "Trilobite.png",
+    "Troodon.png",
+    "Tropeognathus.png",
+    "Tusoteuthis.webp",
+    "VEILWYN.avif",
+    "Velonasaur.webp",
+    "Voidwyrm.png",
+    "Vulture.png",
+    "Woolly_Rhinoceros.png",
+    "Wyvern.png",
+    "Xiphactinus.png",
+    "YiLing.avif",
+    "Yutyranus.avif"
+]</script>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watchEffect, nextTick } = Vue;
+        createApp({
+            setup() {
+                // =========================================================
+                // REJESTR DINOZAURÓW - TUTAJ DODAJESZ NOWE STWORZENIA
+                // base: cena minimalna, img: nazwa pliku (opcjonalnie), variants: dopłaty do wariantu
+                // =========================================================
+                const DINO_REGISTRY = {
+                    "ACHATINA": { base: 500, variants: { "ABERRANT": 700 } },
+                    "ALLOSAURUS": { base: 1800, variants: { "R": 2000, "S (MOD)": 2300, "X": 2000 } },
+                    "AMARGASAURUS": { base: 3000 },
+                    "ANDREWSARCHUS": { base: 1800, variants: { "S (MOD)": 2800 } },
+                    "ANGLERFISH": { base: 1100, variants: { "ABERRANT": 1300 } },
+                    "ANKYLOSAURUS": { base: 500, variants: { "ABERRANT": 700, "S (MOD)": 1000, "X": 700 } },
+                    "ARANEO": { base: 600, variants: { "ABERRANT": 800 } },
+                    "ARCHAEOPTERYX": { base: 900 },
+                    "ARCHELON": { base: 1800, img: "Archelon.avif" },
+                    "ARGENTAVIS": { base: 600, variants: { "X": 800 } },
+                    "ARMADOGGO": { base: 1700 },
+                    "ARTHROPLUERA": { base: 1300, variants: { "ABERRANT": 1500 } },
+                    "ASTROCETUS": { base: 25000 },
+                    "ASTRODELPHIS": { base: 19000 },
+                    "AURELIAX": { base: 4000 },
+                    "BARYONYX": { base: 1100, variants: { "ABERRANT": 1300 } },
+                    "BASILISK": { base: 3000 },
+                    "BASILOSAURUS": { base: 2500, variants: { "S (MOD)": 3000, "X": 2700 } },
+                    "BEELZEBUFO": { base: 800, variants: { "ABERRANT": 1000 } },
+                    "BISON": { base: 2200, img: "Bison.webp" },
+                    "BLOODSTALKER": { base: 2100 },
+                    "BRONTOSAURUS": { base: 2300, variants: { "R": 2500 } },
+                    "BULBDOG": { base: 600 },
+                    "CARBONEMYS": { base: 500, variants: { "ABERRANT": 600, "R": 600 } },
+                    "CARCHARODONTOSAURUS": { base: 5000, variants: { "S (MOD)": 6000 } },
+                    "CARNOTAURUS": { base: 1600, variants: { "ABERRANT": 1800 } },
+                    "CASTROIDES": { base: 600, img: "Giant_Beaver.png" },
+                    "CAT": { base: 800, variants: { "S (MOD)": 1300 }, img: "Cat.webp" },
+                    "CERATOSAURUS": { base: 2000, variants: { "S (MOD)": 3000 } },
+                    "CHALICOTHERIUM": { base: 1500 },
+                    "COMPY": { base: 500 },
+                    "COSMO": { base: 1200 },
+                    "CRYOLOPHOSAURUS": { base: 2700 },
+                    "DAEDON": { base: 1700, variants: { "R": 1900, "S (MOD)": 3700 }, img: "DAEDON.png" },
+                    "DEINONYCHUS": { base: 2000, variants: { "S (MOD)": 3000 } },
+                    "DEINOSUCHUS": { base: 2200, variants: { "S (MOD)": 3200 } },
+                    "DEINOTHERIUM": { base: 2800 },
+                    "DESMODUS": { base: 1600, variants: { "S (MOD)": 2600 } },
+                    "DILOPHOSAUR": { base: 500, variants: { "R": 700 } },
+                    "DIMETRODON": { base: 1000, variants: { "ABERRANT": 1200 } },
+                    "DIMORPHODON": { base: 500, variants: { "ABERRANT": 700 } },
+                    "DINOPITHECUS": { base: 1500 },
+                    "DIPLOCAULUS": { base: 900, variants: { "ABERRANT": 1100 } },
+                    "DIPLODOCUS": { base: 1800, variants: { "ABERRANT": 2000 } },
+                    "DIRE BEAR": { base: 1000, variants: { "ABERRANT": 1200, "S (MOD)": 1500 } },
+                    "DIREWOLF": { base: 1100, variants: { "R": 1300, "S (MOD)": 2100 } },
+                    "DODO": { base: 200, variants: { "ABERRANT": 400, "ZOMBIE": 500 } },
+                    "DOEDICURUS": { base: 500, variants: { "ABERRANT": 700, "S (MOD)": 1000 } },
+                    "DRAKELING": { base: 2000, img: "Drakeling.avif" },
+                    "DREADMARE": { base: 10000, img: "Dreadmare_Icon.avif" },
+                    "DREADNOUGHTUS": { base: 6500, img: "Dreadnoughtus_Icon.avif" },
+                    "DUNG BEETLE": { base: 300, variants: { "ABERRANT": 500 } },
+                    "DUNKLEOSTEUS": { base: 2000, variants: { "S (MOD)": 3000, "X": 2200 } },
+                    "ELDERCLAW": { base: 10000 },
+                    "ELECTROPHORUS": { base: 1500, variants: { "ABERRANT": 1700 } },
+                    "ENFORCER": { base: 3000 },
+                    "EQUUS": { base: 1200, variants: { "ABERRANT": 1400, "R": 1400 } },
+                    "FASOLOZUCHUS": { base: 4000, variants: { "ABERRANT": 5000, "S (MOD)": 8000 }, img: "Fasolasuchus.png" },
+                    "FEATHERLIGHT": { base: 700 },
+                    "FENRIR": { base: 3500, variants: { "S (MOD)": 1800 } },
+                    "FEROX": { base: 1900 },
+                    "FJORDHAWK": { base: 1100 },
+                    "GACHA": { base: 1000 },
+                    "GALLIMIMUS": { base: 1000 },
+                    "GASBAG": { base: 1300, variants: { "R": 1500 }, img: "Gasbags.png" },
+                    "GIANT BEE": { base: 500 },
+                    "GIGADESMODUS": { base: 7000 },
+                    "GIGANOTOSAURUS": { base: 4000, variants: { "R": 4500, "TEK": 6000 } },
+                    "GIGANTOPITHECUS": { base: 1200, variants: { "ABERRANT": 1400 } },
+                    "GIGANOTORAPTOR": { base: 5000, variants: { "ABERRANT": 6000 }, img: "Gigantoraptor.png" },
+                    "GLOON": { base: 2000 },
+                    "GLOWTAIL": { base: 600 },
+                    "GOLEM": { base: 2500, variants: { "CHALK": 3000, "ICE": 3000, "LAVA": 3000, "ROCK": 2500 } },
+                    "GRIFFIN": { base: 1900, variants: { "S (MOD)": 2900 } },
+                    "HELICOPRION": { base: 3000 },
+                    "HESPERONIS": { base: 2000, img: "Hesperornis.png" },
+                    "HYAENODON": { base: 1400 },
+                    "ICHTHYORNIS": { base: 800 },
+                    "ICHTHYOSAURUS": { base: 1100, variants: { "X": 1300 } },
+                    "IGUANODON": { base: 1200, variants: { "ABERRANT": 1400 } },
+                    "JERBOA": { base: 500 },
+                    "KAIRUKU": { base: 900 },
+                    "KAPROSUCHUS": { base: 1300 },
+                    "KARKINOS": { base: 4200 },
+                    "KENTROSAURUS": { base: 1200 },
+                    "LIOPLEURODON": { base: 2000 },
+                    "LYMANTRIA": { base: 1000 },
+                    "LYSTROSAURUS": { base: 700, variants: { "ABERRANT": 900 } },
+                    "MAEGUANA": { base: 900, variants: { "S (MOD)": 1400 } },
+                    "MAEWING": { base: 900, variants: { "S (MOD)": 1400 }, img: "Maewing.png" },
+                    "MAGMASAUR": { base: 3400 },
+                    "MALWYN": { base: 2500 },
+                    "MAMMOTH": { base: 1200 },
+                    "MANAGARMR": { base: 3300, variants: { "S (MOD)": 4300 } },
+                    "MANTA": { base: 1400, variants: { "ABERRANT": 1600 } },
+                    "MANTIS": { base: 1900, variants: { "S (MOD)": 2900 } },
+                    "MEGACHELON": { base: 6000 },
+                    "MEGALANIA": { base: 1100, variants: { "ABERRANT": 1400 } },
+                    "MEGALOCEROS": { base: 1300 },
+                    "MEGALODON": { base: 1700, variants: { "S (MOD)": 2700, "X": 1800 } },
+                    "MEGALOSAURUS": { base: 2000, variants: { "ABERRANT": 2200, "S (MOD)": 4000 } },
+                    "MEGARAPTOR": { base: 2700, variants: { "S (MOD)": 4700 } },
+                    "MEGATHERIUM": { base: 1800, variants: { "R": 2000 } },
+                    "MESOPITEKUS": { base: 700, img: "Mesopithecus.png" },
+                    "MICRORAPTOR": { base: 800 },
+                    "MORELLATOPS": { base: 1100 },
+                    "MOSA": { base: 3700, variants: { "S (MOD)": 4200, "X": 3900 }, img: "Mosasaurus.png" },
+                    "MOSCHOPS": { base: 400, variants: { "ABERRANT": 600 } },
+                    "NOGLIN": { base: 8000 },
+                    "ONYC": { base: 1500 },
+                    "OSSIDON": { base: 3000, variants: { "S (MOD)": 5000 }, img: "ossidon.avif" },
+                    "OTTER": { base: 700, variants: { "ABERRANT": 900, "S (MOD)": 1200, "X": 900 } },
+                    "OVIRAPTOR": { base: 500 },
+                    "OVIS": { base: 600, variants: { "ABERRANT": 800 } },
+                    "PACHYRHINOSARURUS": { base: 1300 },
+                    "PARACERATHERIUM": { base: 1300, variants: { "ABERRANT": 1500, "X": 1500 } },
+                    "PARASAUR": { base: 1000, variants: { "ABERRANT": 1200, "R": 1200, "TEK": 1200, "X": 1200 } },
+                    "PEGOMASTAX": { base: 900 },
+                    "PELARGONIS": { base: 900, img: "Pelagornis.png" },
+                    "PHIOMIA": { base: 700 },
+                    "PHOENIX": { base: 9000 },
+                    "PLESIOSAUR": { base: 3700, variants: { "S (MOD)": 4200 } },
+                    "PROCOPTODON": { base: 1000, variants: { "R": 1200 } },
+                    "PTERANADON": { base: 600 },
+                    "PULMONOSCORPIUS": { base: 1000, variants: { "ABERRANT": 1200 } },
+                    "PURLOVIA": { base: 1200, variants: { "ABERRANT": 1400 } },
+                    "PYROMANE": { base: 7500 },
+                    "QUEEN BEE": { variants: { "S (MOD)": 1000 } },
+                    "QUETZAL": { base: 3000, variants: { "R": 3400, "TEK": 3400 } },
+                    "RAPTOR": { base: 1200, variants: { "ABERRANT": 1300, "TEK": 1400 } },
+                    "RAVAGER": { base: 1300 },
+                    "REAPER": { base: 6000, variants: { "R": 7000 } },
+                    "REAPER KING": { variants: { "S (MOD)": 7000 } },
+                    "REX": { base: 2500, variants: { "S (MOD)": 3500, "TEK": 3000, "X": 3000 } },
+                    "RHYNIOGNATHA": { base: 7000, variants: { "S (MOD)": 9000 } },
+                    "ROCK DRAKE": { base: 2400, variants: { "S (MOD)": 3400 } },
+                    "ROLL RAT": { base: 1300 },
+                    "SABERTOOTH": { base: 1200, variants: { "X": 1400 } },
+                    "SARCO": { base: 1500, variants: { "ABERRANT": 1700 } },
+                    "SHADOWMANE": { base: 3600 },
+                    "SHASTASAURUS": { base: 5000 },
+                    "SHINEHORN": { base: 700, variants: { "S (MOD)": 1400 } },
+                    "SINOMACROPS": { base: 700 },
+                    "SNOW OWL": { base: 1100, variants: { "R": 1200, "S (MOD)": 2100 } },
+                    "SOLWYN": { base: 2300 },
+                    "SPINOSAURUS": { base: 1900, variants: { "ABERRANT": 2100, "S (MOD)": 2400, "X": 2100 } },
+                    "STEGOSAURUS": { base: 1300, variants: { "ABERRANT": 1500, "TEK": 1500 } },
+                    "TAPEJARA": { base: 1000, variants: { "X": 1200 } },
+                    "TERROR BIRD": { base: 1100 },
+                    "THERIZINO": { base: 1300, variants: { "S (MOD)": 1800 }, img: "Therizinosaur.webp" },
+                    "THORNY DRAGON": { base: 1400 },
+                    "THRALL": { base: 1300 },
+                    "THYLACOLEO": { base: 2500, variants: { "R": 2700, "S (MOD)": 3500 } },
+                    "TITANOBOA": { base: 1600, variants: { "ABERRANT": 1800 } },
+                    "TRICERATOPS": { base: 1100, variants: { "ABERRANT": 1200, "S (MOD)": 1600, "TEK": 1300, "X": 1300 } },
+                    "TROODON": { base: 1500 },
+                    "TROPEOGNATHUS": { base: 3100 },
+                    "TUSO": { base: 3500, img: "Tusoteuthis.webp" },
+                    "UNICORN": { base: 2200, variants: { "S (MOD)": 2700 } },
+                    "VEILWYN": { base: 1800, img: "VEILWYN.avif" },
+                    "VELONASAUR": { base: 1300, variants: { "R": 1500, "S (MOD)": 2300 } },
+                    "VOIDWYRM": { base: 5000 },
+                    "VULTURE": { base: 800 },
+                    "WOOLLY RHINO": { base: 1300, variants: { "X": 1500 } },
+                    "WYVERN": {
+                        base: 3000,
+                        variants: {
+                            "CRYSTAL BLOOD": 2000, "CRYSTAL EMBER": 2000, "CRYSTAL TROPICAL": 2000,
+                            "FIRE": 8200, "ICE": 8200, "LIGHTNING": 8050, "POISON": 8050,
+                            "FIRE-S": 4000, "ICE-S": 4000, "LIGHTNING-S": 4000, "POISON-S": 4000,
+                            "S-FIRE": 4000, "S-ICE": 4000, "S-LIGHTNING": 4000, "S-POISON": 4000,
+                            "ZOMBIE FIRE": 8200, "ZOMBIE LIGHTNING": 8050, "ZOMBIE POISON": 8050
+                        }
+                    },
+                    "XIPHACTINUS": { base: 2000 },
+                    "YI LING": { base: 2500, img: "YiLing.avif" },
+                    "YUTHYRANUS": { base: 2400, variants: { "X": 2600 }, img: "Yutyranus.avif" }
+                };
+
+                const rawData = ref([]); const iconList = ref([]); const searchQuery = ref(""); const selectedDinoName = ref(""); const selectedMutations = ref({}); const toast = ref({ show: false, message: "" });
+                const isKastratSelected = ref(false); const preferredBaseIndex = ref(0);
+                const mutationCosts = ref({});
+                const mainStats = [
+                    { key: 'HP', label: 'Życie', icon: 'heart', color: '#8b2c2c', mutKey: 'mut HP' },
+                    { key: 'STAM', label: 'Stamina', icon: 'zap', color: '#d97706', mutKey: 'mut STAM' },
+                    { key: 'WH', label: 'Waga', icon: 'anchor', color: '#1d4ed8', mutKey: 'mut WH' },
+                    { key: 'DMG', label: 'Obrażenia', icon: 'swords', color: '#6d28d9', mutKey: 'mut DMG' },
+                    { key: 'OX', label: 'Tlen', icon: 'wind', color: '#0891b2', mutKey: 'mut OX' },
+                    { key: 'FOOD', label: 'Jedzenie', icon: 'drumstick', color: '#15803d', mutKey: 'mut FOOD' },
+                ];
+                const processedData = computed(() => {
+                    const groups = {};
+                    rawData.value.forEach(item => {
+                        const name = item.DINEK; if (!groups[name]) groups[name] = { name: name, typ: item.typ, variants: [] };
+                        groups[name].variants.push(item);
+                    });
+                    return Object.values(groups).sort((a,b) => a.name.localeCompare(b.name));
+                });
+                const filteredDinos = computed(() => {
+                    if (!searchQuery.value) return processedData.value;
+                    const query = searchQuery.value.toLowerCase();
+                    return processedData.value.filter(d => d.name.toLowerCase().includes(query) || d.typ.toLowerCase().includes(query));
+                });
+                const selectedDino = computed(() => processedData.value.find(d => d.name === selectedDinoName.value));
+                const availableMutations = (statKey) => {
+                    if (!selectedDino.value) return [];
+                    const mutKey = 'mut ' + statKey; const set = new Set();
+                    selectedDino.value.variants.forEach(v => { if (v[mutKey] && v[mutKey] !== '') set.add(v[mutKey]); });
+                    return Array.from(set).sort((a, b) => parseInt(a) - parseInt(b));
+                };
+                const bestMatchVariant = computed(() => {
+                    if (!selectedDino.value) return null;
+                    
+                    const aBase = activeBase.value;
+                    if(!aBase) return null;
+
+                    // 1. Precise match (mutations + base level)
+                    let match = selectedDino.value.variants.find(v => 
+                        // Find a variant whose calculated base (LVL - muts) equals the selected activeBase LVL
+                        (parseInt(v.LVL) - mainStats.reduce((sum, s) => sum + (parseInt(v[s.mutKey]) || 0), 0)) === parseInt(aBase.LVL) &&
+                        mainStats.every(s => String(v[s.mutKey] || '') === String(selectedMutations.value[s.mutKey] || ''))
+                    );
+                    
+                    // 2. Fallback: mutation match only (but prefer one that matches the base if possible)
+                    if (!match) {
+                        // If no precise match for THIS base, we don't fallback to another base's variant. 
+                        // It's a custom variant for this specific base.
+                        match = null;
+                    }
+
+                    return match || null;
+                });
+                const baseVariants = computed(() => {
+                    if (!selectedDino.value) return [];
+                    return selectedDino.value.variants.filter(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
+                });
+                const activeBase = computed(() => baseVariants.value[preferredBaseIndex.value] || baseVariants.value[0] || null);
+
+                const baseLevel = computed(() => {
+                    if (activeBase.value) return parseInt(activeBase.value.LVL);
+                    const firstV = selectedDino.value?.variants[0]; if (!firstV) return 0;
+                    let vMutSum = 0; mainStats.forEach(s => vMutSum += parseInt(firstV[s.mutKey]) || 0);
+                    return (parseInt(firstV.LVL) - vMutSum);
+                });
+                const selectionMutationTotal = computed(() => {
+                    let total = 0; mainStats.forEach(s => total += parseInt(selectedMutations.value[s.mutKey]) || 0);
+                    return total;
+                });
+                const calculatedLevel = computed(() => {
+                    if (!selectedDino.value) return '---';
+                    return baseLevel.value === 0 ? '---' : baseLevel.value + selectionMutationTotal.value;
+                });
+                const isKastratRequired = computed(() => {
+                    return mainStats.some(s => (parseInt(selectedMutations.value[s.mutKey]) || 0) >= 100);
+                });
+                const isKastratActive = computed(() => isKastratRequired.value || isKastratSelected.value || (bestMatchVariant.value?.KASTRAT ? true : false));
+
+                const getMutationCost = (val) => {
+                    const info = pricingInfo.value;
+                    const multiplier = info.multiplier;
+                    if (multiplier === 0 || !val) return 0;
+                    
+                    const scaling = pricingData.mutationScaling[1]; // Use single stat scaling for individual button labels
+                    const cost10k = interpolate(scaling, 'pts', val);
+                    const sugCost10k = cost10k * 1.2;
+                    
+                    // We show suggested price on buttons usually, or matching whatever logic user prefers
+                    // According to previous context, we show minimal price unless Kastrat? 
+                    // Let's show Minimal price as it matches the "Cena do obliczeń" logic.
+                    return Math.round((cost10k * multiplier) / 10) * 10; 
+                };
+
+                const pricingData = {
+                    levelScaling: [
+                        { lvl: 10, price: 580 },
+                        { lvl: 100, price: 1400 },
+                        { lvl: 200, price: 2570 },
+                        { lvl: 300, price: 4000 },
+                        { lvl: 400, price: 6000 },
+                        { lvl: 500, price: 8000 },
+                        { lvl: 600, price: 12000 },
+                        { lvl: 700, price: 16000 },
+                        { lvl: 800, price: 20000 },
+                        { lvl: 900, price: 24000 }
+                    ],
+                    mutationScaling: {
+                        1: [
+                            { pts: 10, price: 600 },
+                            { pts: 50, price: 3000 },
+                            { pts: 98, price: 5880 },
+                            { pts: 100, price: 6000 },
+                            { pts: 150, price: 7500 },
+                            { pts: 200, price: 9000 },
+                            { pts: 250, price: 10500 },
+                            { pts: 255, price: 10650 }
+                        ],
+                        2: [
+                            { pts: 20, price: 1200 },
+                            { pts: 100, price: 6000 },
+                            { pts: 196, price: 11760 },
+                            { pts: 200, price: 12000 },
+                            { pts: 300, price: 15000 },
+                            { pts: 400, price: 18000 },
+                            { pts: 500, price: 21000 },
+                            { pts: 510, price: 21300 }
+                        ],
+                        3: [
+                            { pts: 30, price: 1800 },
+                            { pts: 150, price: 9000 },
+                            { pts: 294, price: 17640 },
+                            { pts: 300, price: 18000 },
+                            { pts: 450, price: 22500 },
+                            { pts: 600, price: 27000 },
+                            { pts: 750, price: 31500 },
+                            { pts: 765, price: 31950 }
+                        ],
+                        4: [
+                            { pts: 40, price: 2400 },
+                            { pts: 200, price: 12000 },
+                            { pts: 392, price: 23520 },
+                            { pts: 400, price: 24000 },
+                            { pts: 600, price: 30000 },
+                            { pts: 800, price: 36000 },
+                            { pts: 1000, price: 42000 },
+                            { pts: 1020, price: 42600 }
+                        ]
+                    },
+                    speciesBase: DINO_REGISTRY
+                };
+
+                const interpolate = (table, key, target) => {
+                    if (target <= table[0][key]) return table[0].price;
+                    if (target >= table[table.length - 1][key]) return table[table.length - 1].price;
+                    for (let i = 0; i < table.length - 1; i++) {
+                        const start = table[i];
+                        const end = table[i + 1];
+                        if (target >= start[key] && target <= end[key]) {
+                            const ratio = (target - start[key]) / (end[key] - start[key]);
+                            return start.price + ratio * (end.price - start.price);
+                        }
+                    }
+                    return 0;
+                };
+
+                const pricingInfo = computed(() => {
+                    if (!selectedDino.value) return { baseSpeciesPrice: 0, multiplier: 0 };
+                    const fullName = selectedDinoName.value.toUpperCase();
+                    let species = "";
+                    let variant = "";
+
+                    // Find species by checking if name starts with any known species key
+                    const sortedKeys = Object.keys(pricingData.speciesBase).sort((a,b) => b.length - a.length);
+                    const foundSpeciesKey = sortedKeys.find(k => fullName.startsWith(k));
+                    
+                    if (foundSpeciesKey) {
+                        species = foundSpeciesKey;
+                        variant = fullName.substring(species.length).replace(/^[- ]+/, '').trim();
+                    } else {
+                        // Fallback to original split logic
+                        const parts = fullName.split('-');
+                        species = parts[0].trim();
+                        variant = parts.slice(1).join('-').trim();
+                    }
+
+                    const entry = pricingData.speciesBase[species];
+                    let baseSpeciesPrice = 10000;
+                    if (entry) {
+                        baseSpeciesPrice = entry.base || 10000;
+                        if (variant && entry.variants) {
+                            // Try exact variant match
+                            if (entry.variants[variant]) {
+                                baseSpeciesPrice = entry.variants[variant];
+                            } else {
+                                // Try flexible variant match (ignore hyphens/spaces)
+                                const vClean = variant.replace(/[- ]/g, '').toUpperCase();
+                                const foundVar = Object.keys(entry.variants).find(v => {
+                                    const vKeyClean = v.toUpperCase().replace(/[- ]/g, '');
+                                    return vClean === vKeyClean || vClean.includes(vKeyClean) || vKeyClean.includes(vClean);
+                                });
+                                if (foundVar) baseSpeciesPrice = entry.variants[foundVar];
+                            }
+                        }
+                    }
+                    return { baseSpeciesPrice, multiplier: baseSpeciesPrice / 10000 };
+                });
+
+                const calculatedPrice = computed(() => {
+                    const info = pricingInfo.value;
+                    const multiplier = info.multiplier;
+                    if (multiplier === 0) return { min: 0, sug: 0 };
+
+                    const totalLvl = calculatedLevel.value === '---' ? 0 : calculatedLevel.value;
+                    const totalMut = selectionMutationTotal.value;
+                    const baseLvlActual = Math.max(0, totalLvl - totalMut);
+
+                    const levelPrice10k = interpolate(pricingData.levelScaling, 'lvl', baseLvlActual);
+                    const levelPriceSug10k = levelPrice10k * 1.2;
+                    
+                    let mutPrice10k = 0;
+                    const activeStatCount = mainStats.filter(s => selectedMutations.value[s.mutKey]).length;
+                    if (activeStatCount > 0 && totalMut > 0) {
+                        const scaling = pricingData.mutationScaling;
+                        if (activeStatCount === 1) {
+                            mutPrice10k = interpolate(scaling[1], 'pts', totalMut);
+                        } else if (activeStatCount === 2) {
+                            mutPrice10k = interpolate(scaling[2], 'pts', totalMut);
+                        } else if (activeStatCount === 3 && scaling[3]) {
+                            mutPrice10k = interpolate(scaling[3], 'pts', totalMut);
+                        } else if (scaling[4]) {
+                            mutPrice10k = interpolate(scaling[4], 'pts', totalMut);
+                        }
+                    }
+                    const mutPriceSug10k = mutPrice10k * 1.2;
+
+                    const minTotal = Math.ceil(((levelPrice10k + mutPrice10k) * multiplier) / 100) * 100;
+                    const sugTotal = Math.ceil(((levelPriceSug10k + mutPriceSug10k) * multiplier) / 100) * 100;
+
+                    let finalPrice = minTotal;
+                    if (isKastratSelected.value) {
+                         // Discount is applied from Minimal price (displayed price)
+                         finalPrice = Math.ceil((minTotal * 0.8) / 100) * 100;
+                    }
+
+                    return { min: minTotal, sug: sugTotal, final: finalPrice };
+                });
+
+                const displayPrice = computed(() => {
+                    if (!selectedDino.value) return { min: '0', sug: '0', final: '0' };
+                    let minVal = 0;
+                    let sugVal = 0;
+                    let finalVal = 0;
+
+                    const match = bestMatchVariant.value;
+                    if (match) {
+                        minVal = parseInt(match.CENA.replace(/\s/g, '')) || 0;
+                        sugVal = Math.ceil((minVal * 1.2) / 100) * 100;
+                        if (isKastratSelected.value && !match.KASTRAT) {
+                            finalVal = Math.ceil((minVal * 0.8) / 100) * 100;
+                        } else {
+                            finalVal = minVal;
+                        }
+                    } else {
+                        const calc = calculatedPrice.value;
+                        // Apply discount to both if selected
+                        minVal = isKastratSelected.value ? Math.ceil((calc.min * 0.8) / 100) * 100 : calc.min;
+                        sugVal = isKastratSelected.value ? Math.ceil((calc.sug * 0.8) / 100) * 100 : calc.sug;
+                        finalVal = minVal;
+                    }
+                    return {
+                        min: formatPrice(minVal),
+                        sug: formatPrice(sugVal),
+                        final: formatPrice(finalVal)
+                    };
+                });
+
+                const selectedDinoDLC = computed(() => {
+                    if (!selectedDino.value) return null;
+                    if (bestMatchVariant.value?.DLC) return bestMatchVariant.value.DLC;
+                    const firstWithDLC = selectedDino.value.variants.find(v => v.DLC);
+                    return firstWithDLC ? firstWithDLC.DLC : null;
+                });
+
+                const formatStatDisplay = (stat) => {
+                    const v = bestMatchVariant.value;
+                    if (!v) {
+                        const baseV = activeBase.value || selectedDino.value?.variants.find(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
+                        const baseVal = baseV ? (parseInt(baseV[stat.key]) || 0) : '---';
+                        const mutVal = parseInt(selectedMutations.value[stat.mutKey]) || 0;
+                        const sum = (baseVal === '---') ? '---' : baseVal + mutVal;
+                        if (mutVal === 0) return `${baseVal}`;
+                        return `${baseVal} + ${mutVal} (${sum})`;
+                    }
+                    const base = parseInt(v[stat.key]) || 0;
+                    const mut = parseInt(v[stat.mutKey]) || 0;
+                    if (mut === 0) return `${base}`;
+                    return `${base} + ${mut} (${base + mut})`;
+                };
+                const dinoNameFontSize = computed(() => {
+                    const name = selectedDinoName.value || "";
+                    const len = name.length;
+                    if (window.innerWidth < 768) {
+                        if (len > 25) return '0.7rem';
+                        if (len > 20) return '0.85rem';
+                        if (len > 15) return '1.0rem';
+                        if (len > 12) return '1.2rem';
+                        return '1.8rem';
+                    }
+                    if (len > 25) return '1.0rem';
+                    if (len > 20) return '1.2rem';
+                    if (len > 15) return '1.5rem';
+                    if (len > 12) return '1.9rem';
+                    return '3rem';
+                });
+                const hasMutations = (dino) => {
+                    return dino.variants.some(v => mainStats.some(s => v[s.mutKey] && v[s.mutKey] !== ''));
+                };
+                const selectDino = (name) => { selectedDinoName.value = name; resetFilters(); };
+                const toggleKastrat = () => {
+                    if (!isKastratRequired.value) {
+                        isKastratSelected.value = !isKastratSelected.value;
+                    }
+                };
+                const toggleMutation = (statKey, val) => {
+                    const mutKey = 'mut ' + statKey;
+                    if (selectedMutations.value[mutKey] === val) delete selectedMutations.value[mutKey];
+                    else selectedMutations.value[mutKey] = val;
+                };
+                const resetFilters = () => { selectedMutations.value = {}; isKastratSelected.value = false; preferredBaseIndex.value = 0; };
+                const formatPrice = (p) => p ? p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "???";
+                const translateType = (typ) => {
+                    const types = { 'gryzak': 'Bojowy', 'latacz': 'Podniebny', 'zbieracz': 'Użytkowy', 'wodny': 'Morski', 'pet': 'Towarzysz' };
+                    return types[typ] || typ;
+                };
+
+                const translateDLC = (dlc) => {
+                    if (!dlc) return "";
+                    const dlcMap = { 'LC': 'Lost Colony', 'FT': 'Fantastic Tames' };
+                    return dlcMap[dlc] || dlc;
+                };
+
+                const getStatValue = (stat) => {
+                    const v = bestMatchVariant.value;
+                    let baseVal = 0, mutVal = 0;
+                    if (!v) {
+                        const baseV = activeBase.value || selectedDino.value?.variants.find(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
+                        baseVal = baseV ? (parseInt(baseV[stat.key]) || 0) : 0;
+                        mutVal = parseInt(selectedMutations.value[stat.mutKey]) || 0;
+                    } else {
+                        baseVal = parseInt(v[stat.key]) || 0;
+                        mutVal = parseInt(v[stat.mutKey]) || 0;
+                    }
+                    return { base: baseVal, mut: mutVal, sum: baseVal + mutVal };
+                };
+                const onDataLoaded = () => {
+                    // No need to pre-calculate mutation costs anymore
+                };
+                const getDinoImg = (name) => {
+                    if (!name) return null;
+                    const baseName = name.split('-')[0].trim().toUpperCase();
+                    
+                    // 1. Look up in Registry
+                    if (DINO_REGISTRY[baseName]?.img) return DINO_REGISTRY[baseName].img;
+                    
+                    // 2. Fuzzy matching fallback
+                    const cleanName = baseName.replace(/\s/g, '').toLowerCase();
+                    return iconList.value.find(f => {
+                        const fileBase = f.split('.')[0].replace(/_/g, '').toLowerCase();
+                        return fileBase === cleanName || fileBase.startsWith(cleanName);
+                    }) || null;
+                };
+                const copyOrder = () => {
+                    const priceStr = displayPrice.value.final;
+                    const isCustom = !bestMatchVariant.value;
+                    const muts = mainStats.filter(s => selectedMutations.value[s.mutKey]).map(s => `${s.label}: +${selectedMutations.value[s.mutKey]}`).join(', ');
+                    const baseLvlText = activeBase.value ? activeBase.value.LVL : baseLevel.value;
+                    
+                    const text = `--- ZAMÓWIENIE HALUSZKI SHOP ---\nStworzenie: ${selectedDinoName.value}\nPoziom Łączny: ${calculatedLevel.value}\nWybrana Baza: ${baseLvlText} LVL\nCena: ${priceStr} DD\nStatus: ${isCustom ? 'Indywidualny (Sugerowana)' : 'Katalogowy (Gwarantowana)'}\nKonfiguracja: ${muts || 'Brak dodatkowych mutacji'}\nKastrat: ${isKastratActive.value ? 'TAK' : 'NIE'}\n-------------------------------`;
+                    navigator.clipboard.writeText(text);
+                    showToast("Skopiowano!");
+                };
+                const showToast = (msg) => { toast.value = { show: true, message: msg }; setTimeout(() => toast.value.show = false, 3000); };
+                onMounted(() => {
+                    try {
+                        rawData.value = JSON.parse(document.getElementById('ark-data').textContent);
+                        iconList.value = JSON.parse(document.getElementById('ico-data').textContent);
+                        onDataLoaded();
+                    } catch(e) { console.error("Data error:", e); }
+                });
+                watchEffect(() => { if (typeof lucide !== 'undefined') nextTick(() => lucide.createIcons()); });
+                return {
+                    searchQuery, filteredDinos, selectedDinoName, selectedDino, selectedMutations,
+                    mainStats, toast, bestMatchVariant, calculatedLevel, displayPrice, baseLevel, selectionMutationTotal,
+                    isKastratRequired, isKastratSelected, isKastratActive, calculatedPrice, hasMutations, dinoNameFontSize,
+                    baseVariants, preferredBaseIndex, activeBase, getMutationCost, pricingInfo, selectedDinoDLC,
+                    selectDino, resetFilters, toggleMutation, toggleKastrat, availableMutations, formatStatDisplay, getStatValue,
+                    formatPrice, translateType, translateDLC, getDinoImg, copyOrder
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+
+

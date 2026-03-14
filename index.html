@@ -416,7 +416,6 @@
                                 typ: item.typ, 
                                 variants: [],
                                 maxBaseLevel: 0,
-                                minMutSum: Infinity,
                                 representativeStats: {},
                                 hasMutations: false
                             };
@@ -428,23 +427,12 @@
                         
                         if (mutSum > 0) groups[name].hasMutations = true;
                         
-                        // Priority 1: Zero mutations (true base)
-                        if (mutSum === 0) {
-                            if (baseLvl >= groups[name].maxBaseLevel) {
-                                groups[name].maxBaseLevel = baseLvl;
-                                const stats = {};
-                                mainStats.forEach(s => stats[s.key] = parseInt(item[s.key]) || 0);
-                                groups[name].representativeStats = stats;
-                            }
-                        } 
-                        // Priority 2: Lowest mutations (for species like Ovis that only have mutated variants)
-                        else if (groups[name].maxBaseLevel === 0) {
-                            if (mutSum < groups[name].minMutSum) {
-                                groups[name].minMutSum = mutSum;
-                                const stats = {};
-                                mainStats.forEach(s => stats[s.key] = parseInt(item[s.key]) || 0);
-                                groups[name].representativeStats = stats;
-                            }
+                        if (mutSum === 0 && baseLvl >= groups[name].maxBaseLevel) {
+                            groups[name].maxBaseLevel = baseLvl;
+                            // Store base values for hover display
+                            const stats = {};
+                            mainStats.forEach(s => stats[s.key] = parseInt(item[s.key]) || 0);
+                            groups[name].representativeStats = stats;
                         }
                     });
                     return Object.values(groups).sort((a,b) => a.name.localeCompare(b.name));
@@ -500,18 +488,7 @@
                 });
                 const baseVariants = computed(() => {
                     if (!selectedDino.value) return [];
-                    const zeroMut = selectedDino.value.variants.filter(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
-                    if (zeroMut.length > 0) return zeroMut;
-                    
-                    // If no zero-mut variants, find ones with minimum mutation sum (like Ovis)
-                    let minMuts = Infinity;
-                    selectedDino.value.variants.forEach(v => {
-                        const sum = mainStats.reduce((s, st) => s + (parseInt(v[st.mutKey]) || 0), 0);
-                        if (sum < minMuts) minMuts = sum;
-                    });
-                    return selectedDino.value.variants.filter(v => {
-                        return mainStats.reduce((s, st) => s + (parseInt(v[st.mutKey]) || 0), 0) === minMuts;
-                    });
+                    return selectedDino.value.variants.filter(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
                 });
                 const activeBase = computed(() => baseVariants.value[preferredBaseIndex.value] || baseVariants.value[0] || null);
 

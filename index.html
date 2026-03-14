@@ -320,12 +320,7 @@
                             :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
                                      selectedCategory === 'pet' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="heart" class="w-3.5 h-3.5"></i> Towarzysze
-                    </button>
-                    <button @click="selectedCategory = 'dlc'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
-                                     selectedCategory === 'pet' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
-                        <i data-lucide="money" class="w-3.5 h-3.5"></i> DLC
-                    </button>                    
+                    </button>               
                 </div>
                 <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 sm:gap-4 justify-items-center">
                     <div v-for="dino in filteredDinos" :key="dino.name" @click="selectDino(dino.name)" 

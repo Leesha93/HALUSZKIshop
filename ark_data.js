@@ -166,9 +166,10 @@ const ICON_DATA = [
     "Wyvern.png",
     "Xiphactinus.png",
     "YiLing.avif",
-    "Yuthyrannus.avif"
-	"Solwyn.avif"
-	"malwyn.avif"
+    "Yuthyrannus.avif",
+    "malwyn.avif",
+    "ossidon.avif",
+    "Solwyn.avif"
 ];
 const DINO_REGISTRY = {
                     "ACHATINA": { base: 500, variants: { "ABERRANT": 700 } },
@@ -177,7 +178,7 @@ const DINO_REGISTRY = {
                     "ANDREWSARCHUS": { base: 1800, variants: { "S (MOD)": 2800 } },
                     "ANGLERFISH": { base: 1100, variants: { "ABERRANT": 1300 } },
                     "ANKYLOSAURUS": { base: 500, variants: { "ABERRANT": 700, "S (MOD)": 1000, "X": 700 } },
-                    "ARANEO": { base: 600, variants: { "ABERRANT": 800 } },
+                    "ARANEO": { base: 600, variants: { "ABERRANT": 800 }, img: "Spider.png" },
                     "ARCHAEOPTERYX": { base: 900 },
                     "ARCHELON": { base: 1800, img: "Archelon.avif" },
                     "ARGENTAVIS": { base: 600, variants: { "X": 800 } },
@@ -295,7 +296,7 @@ const DINO_REGISTRY = {
                     "PLESIOSAUR": { base: 3700, variants: { "S (MOD)": 4200 } },
                     "PROCOPTODON": { base: 1000, variants: { "R": 1200 } },
                     "PTERANADON": { base: 600 },
-                    "PULMONOSCORPIUS": { base: 1000, variants: { "ABERRANT": 1200 } },
+                    "PULMONOSCORPIUS": { base: 1000, variants: { "ABERRANT": 1200 }, img: "Scorpion.png" },
                     "PURLOVIA": { base: 1200, variants: { "ABERRANT": 1400 } },
                     "PYROMANE": { base: 7500 },
                     "QUEEN BEE": { variants: { "S (MOD)": 1000 } },
@@ -349,5 +350,3 @@ const DINO_REGISTRY = {
                     "YI LING": { base: 2500, img: "YiLing.avif" },
                     "YUTHYRANNUS": { base: 2400, variants: { "X": 2600 }, img: "Yuthyrannus.avif" }
                 };
-
-

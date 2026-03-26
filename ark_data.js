@@ -167,6 +167,8 @@ const ICON_DATA = [
     "Xiphactinus.png",
     "YiLing.avif",
     "Yuthyrannus.avif"
+	"Solwyn.avif"
+	"malwyn.avif"
 ];
 const DINO_REGISTRY = {
                     "ACHATINA": { base: 500, variants: { "ABERRANT": 700 } },
@@ -260,7 +262,7 @@ const DINO_REGISTRY = {
                     "MAEGUANA": { base: 900, variants: { "S (MOD)": 1400 } },
                     "MAEWING": { base: 900, variants: { "S (MOD)": 1400 }, img: "Maewing.png" },
                     "MAGMASAUR": { base: 3400 },
-                    "MALWYN": { base: 2500 },
+                    "MALWYN": { base: 2500, img: "malwyn.avif" },
                     "MAMMOTH": { base: 1200 },
                     "MANAGARMR": { base: 3300, variants: { "S (MOD)": 4300 } },
                     "MANTA": { base: 1400, variants: { "ABERRANT": 1600 } },
@@ -313,7 +315,7 @@ const DINO_REGISTRY = {
                     "SHINEHORN": { base: 700, variants: { "S (MOD)": 1400 } },
                     "SINOMACROPS": { base: 700 },
                     "SNOW OWL": { base: 1100, variants: { "R": 1200, "S (MOD)": 2100 } },
-                    "SOLWYN": { base: 2300 },
+                    "SOLWYN": { base: 2300, img: "Solwyn.avif" },
                     "SPINOSAURUS": { base: 1900, variants: { "ABERRANT": 2100, "S (MOD)": 2400, "X": 2100 } },
                     "STEGOSAURUS": { base: 1300, variants: { "ABERRANT": 1500, "TEK": 1500 } },
                     "TAPEJARA": { base: 1000, variants: { "X": 1200 } },

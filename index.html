@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haluszki Shop - Mroczne Zakamarki</title>
+    <title>Haluszki Shop - Dinosaur Selector</title>
     <link rel="icon" type="image/png" href="raw.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -87,8 +87,10 @@
                 <i :data-lucide="isSidebarOpen ? 'x' : 'menu'" class="w-6 h-6"></i>
             </button>
         </div>
+
         <!-- Sidebar Overlay (Mobile) -->
         <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] md:hidden transition-all duration-300"></div>
+
         <!-- Sidebar -->
         <aside :class="['w-full md:w-80 glass border-r border-[#3d2b1f] flex flex-col h-screen fixed md:sticky top-0 left-0 z-[1000] transition-transform duration-300 ease-in-out md:translate-x-0', isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']" style="pointer-events: auto;">
             <div class="p-6 pt-24 md:pt-6 border-b border-[#3d2b1f]">
@@ -124,6 +126,7 @@
                 </transition-group>
             </div>
         </aside>
+
         <!-- Main Content -->
         <main class="flex-1 min-w-0 p-4 md:p-12 overflow-y-auto custom-scrollbar relative z-0">
             <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-10">
@@ -142,6 +145,7 @@
                                 <h2 class="font-black text-white tracking-tighter uppercase leading-none drop-shadow-lg" :style="{ fontSize: dinoNameFontSize }">{{ selectedDinoName }}</h2>
                             </div>
                         </div>
+
                         <!-- Mobile Title Block -->
                         <div class="md:hidden glass p-6 rounded-3xl border border-[#d4a358]/20 bg-gradient-to-br from-[#2a221a] to-[#1a1510]">
                             <div class="flex items-center gap-2 mb-3">
@@ -187,6 +191,7 @@
                                     <div v-if="isKastratSelected" class="text-[8px] text-red-500/80 font-black uppercase mt-2">-20% Zrabatowano </div>
                                 </div>
                             </div>
+
                             <!-- Variant & Kastrat Controls Integrated -->                            <div class="glass p-4 rounded-2xl space-y-4">
                                 <div v-if="baseVariants.length > 1">
                                     <label class="text-[9px] text-[#a68d60] uppercase font-black tracking-widest block mb-2 text-center">Wybierz Bazę (LVL):</label>
@@ -223,6 +228,7 @@
                         </div>
                     </div>
                     <div class="flex-1 w-full space-y-8">
+
                         <div class="glass p-6 rounded-3xl border border-[#d4a358]/20 bg-gradient-to-br from-[#2a221a] to-[#1a1510]">
                             <h3 class="text-xl font-black uppercase tracking-wider mb-8 flex items-center gap-3"><i data-lucide="dna" class="text-primary w-6 h-6"></i>STATYSTYKI I MUTACJE</h3>
                             <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6">
@@ -278,6 +284,7 @@
                     <h2 class="text-3xl font-black text-white uppercase tracking-tighter mb-2">Poznaj nasze Stworzenia</h2>
                     <p class="text-[#a68d60] font-bold uppercase text-[10px] tracking-[0.2em]">Haluszki Shop - Mroczne zakamarki</p>
                 </div>
+
                 <!-- Filtry Kategorii -->
                 <div class="flex flex-wrap gap-2 mb-8">
                     <button @click="selectedCategory = null" 
@@ -336,6 +343,7 @@
                                  v-html="hyphenateName(dino.name)"></div>
                             <div class="text-[8px] text-[#a68d60] uppercase font-bold tracking-widest opacity-60">{{ translateType(dino.typ) }}</div>
                         </div>
+
                         <!-- Hover Stats Lightbox -->
                         <div v-if="dino.maxBaseLevel > 0 || dino.hasMutations" 
                              class="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
@@ -363,6 +371,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div v-if="filteredDinos.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
                         <i data-lucide="search-x" class="w-8 h-8 text-[#a68d60] opacity-40"></i>
@@ -374,7 +383,9 @@
             <div v-if="toast.show" class="fixed bottom-10 right-10 bg-[#d4a358] text-[#1a1510] px-8 py-4 rounded-2xl flex items-center gap-4 z-50 shadow-2xl border-2 border-white/20"><i data-lucide="check-circle-2" class="w-6 h-6"></i><span class="font-black uppercase tracking-widest text-sm">{{ toast.message }}</span></div>
         </main>
     </div>
+
 <script src="ark_data.js"></script>
+
     <script>
         const { createApp, ref, computed, onMounted, watchEffect, nextTick } = Vue;
         createApp({
@@ -384,6 +395,7 @@
                 // base: cena minimalna, img: nazwa pliku (opcjonalnie), variants: dopłaty do wariantu
                 // =========================================================
                 // DINO_REGISTRY is now loaded from ark_data.js as a global constant.
+
                 const rawData = ref([]); const iconList = ref([]); const searchQuery = ref(""); const selectedCategory = ref(null); const hoveredDino = ref(null); const selectedDinoName = ref(""); const selectedMutations = ref({}); const toast = ref({ show: false, message: "" });
                 const isKastratSelected = ref(false); const preferredBaseIndex = ref(0); const isSidebarOpen = ref(false);
                 const mutationCosts = ref({});
@@ -458,6 +470,7 @@
                     
                     const aBase = activeBase.value;
                     if(!aBase) return null;
+
                     // 1. Precise match (mutations + base level)
                     let match = selectedDino.value.variants.find(v => 
                         // Find a variant whose calculated base (LVL - muts) equals the selected activeBase LVL
@@ -471,6 +484,7 @@
                         // It's a custom variant for this specific base.
                         match = null;
                     }
+
                     return match || null;
                 });
                 const baseVariants = computed(() => {
@@ -478,6 +492,7 @@
                     return selectedDino.value.variants.filter(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
                 });
                 const activeBase = computed(() => baseVariants.value[preferredBaseIndex.value] || baseVariants.value[0] || null);
+
                 const baseLevel = computed(() => {
                     if (activeBase.value) return parseInt(activeBase.value.LVL);
                     const firstV = selectedDino.value?.variants[0]; if (!firstV) return 0;
@@ -496,6 +511,7 @@
                     return mainStats.some(s => (parseInt(selectedMutations.value[s.mutKey]) || 0) >= 100);
                 });
                 const isKastratActive = computed(() => isKastratRequired.value || isKastratSelected.value || (bestMatchVariant.value?.KASTRAT ? true : false));
+
                 const getMutationCost = (val) => {
                     const info = pricingInfo.value;
                     const multiplier = info.multiplier;
@@ -510,6 +526,7 @@
                     // Let's show Minimal price as it matches the "Cena do obliczeń" logic.
                     return Math.round((cost10k * multiplier) / 10) * 10; 
                 };
+
                 const pricingData = {
                     levelScaling: [
                         { lvl: 10, price: 580 },
@@ -567,6 +584,7 @@
                     },
                     speciesBase: DINO_REGISTRY
                 };
+
                 const interpolate = (table, key, target) => {
                     if (target <= table[0][key]) return table[0].price;
                     if (target >= table[table.length - 1][key]) return table[table.length - 1].price;
@@ -580,11 +598,13 @@
                     }
                     return 0;
                 };
+
                 const pricingInfo = computed(() => {
                     if (!selectedDino.value) return { baseSpeciesPrice: 0, multiplier: 0 };
                     const fullName = selectedDinoName.value.toUpperCase();
                     let species = "";
                     let variant = "";
+
                     // Find species by checking if name starts with any known species key
                     const sortedKeys = Object.keys(pricingData.speciesBase).sort((a,b) => b.length - a.length);
                     const foundSpeciesKey = sortedKeys.find(k => fullName.startsWith(k));
@@ -598,6 +618,7 @@
                         species = parts[0].trim();
                         variant = parts.slice(1).join('-').trim();
                     }
+
                     const entry = pricingData.speciesBase[species];
                     let baseSpeciesPrice = 10000;
                     if (entry) {
@@ -619,13 +640,16 @@
                     }
                     return { baseSpeciesPrice, multiplier: baseSpeciesPrice / 10000 };
                 });
+
                 const calculatedPrice = computed(() => {
                     const info = pricingInfo.value;
                     const multiplier = info.multiplier;
                     if (multiplier === 0) return { min: 0, sug: 0 };
+
                     const totalLvl = calculatedLevel.value === '---' ? 0 : calculatedLevel.value;
                     const totalMut = selectionMutationTotal.value;
                     const baseLvlActual = Math.max(0, totalLvl - totalMut);
+
                     const levelPrice10k = interpolate(pricingData.levelScaling, 'lvl', baseLvlActual);
                     const levelPriceSug10k = levelPrice10k * 1.2;
                     
@@ -644,20 +668,25 @@
                         }
                     }
                     const mutPriceSug10k = mutPrice10k * 1.2;
+
                     const minTotal = Math.ceil(((levelPrice10k + mutPrice10k) * multiplier) / 100) * 100;
                     const sugTotal = Math.ceil(((levelPriceSug10k + mutPriceSug10k) * multiplier) / 100) * 100;
+
                     let finalPrice = minTotal;
                     if (isKastratSelected.value) {
                          // Discount is applied from Minimal price (displayed price)
                          finalPrice = Math.ceil((minTotal * 0.8) / 100) * 100;
                     }
+
                     return { min: minTotal, sug: sugTotal, final: finalPrice };
                 });
+
                 const displayPrice = computed(() => {
                     if (!selectedDino.value) return { min: '0', sug: '0', final: '0' };
                     let minVal = 0;
                     let sugVal = 0;
                     let finalVal = 0;
+
                     const match = bestMatchVariant.value;
                     if (match) {
                         minVal = parseInt(match.CENA.replace(/\s/g, '')) || 0;
@@ -680,12 +709,14 @@
                         final: formatPrice(finalVal)
                     };
                 });
+
                 const selectedDinoDLC = computed(() => {
                     if (!selectedDino.value) return null;
                     if (bestMatchVariant.value?.DLC) return bestMatchVariant.value.DLC;
                     const firstWithDLC = selectedDino.value.variants.find(v => v.DLC);
                     return firstWithDLC ? firstWithDLC.DLC : null;
                 });
+
                 const formatStatDisplay = (stat) => {
                     const v = bestMatchVariant.value;
                     if (!v) {
@@ -738,11 +769,13 @@
                     const types = { 'gryzak': 'Bojowy', 'latacz': 'Latający', 'zbieracz': 'Użytkowy', 'wodny': 'Wodny', 'pet': 'Towarzysz' };
                     return types[typ] || typ;
                 };
+
                 const translateDLC = (dlc) => {
                     if (!dlc) return "";
                     const dlcMap = { 'LC': 'Lost Colony', 'FT': 'Fantastic Tames' };
                     return dlcMap[dlc] || dlc;
                 };
+
                 const getStatValue = (stat) => {
                     const v = bestMatchVariant.value;
                     let baseVal = 0, mutVal = 0;
@@ -770,6 +803,7 @@
                             cleanName = cleanName.replace(suffix, '').trim();
                         }
                     }
+
                     // 1. Look up in Registry
                     if (DINO_REGISTRY[cleanName]?.img) return DINO_REGISTRY[cleanName].img;
                     
@@ -781,12 +815,29 @@
                     }) || null;
                 };
                 const copyOrder = () => {
-                    const priceStr = displayPrice.value.final;
                     const isCustom = !bestMatchVariant.value;
-                    const muts = mainStats.filter(s => selectedMutations.value[s.mutKey]).map(s => `${s.label}: +${selectedMutations.value[s.mutKey]}`).join(', ');
-                    const baseLvlText = activeBase.value ? activeBase.value.LVL : baseLevel.value;
                     
-                    const text = `--- ZAMÓWIENIE HALUSZKI SHOP ---\nStworzenie: ${selectedDinoName.value}\nPoziom Łączny: ${calculatedLevel.value}\nWybrana Baza: ${baseLvlText} LVL\nCena: ${priceStr} DD\nStatus: ${isCustom ? 'Indywidualny (Sugerowana)' : 'Katalogowy (Gwarantowana)'}\nKonfiguracja: ${muts || 'Brak dodatkowych mutacji'}\nKastrat: ${isKastratActive.value ? 'TAK' : 'NIE'}\n-------------------------------`;
+                    // Dla zamówień indywidualnych pokazujemy zakres, dla katalogowych jedną cenę
+                    const priceStr = isCustom 
+                        ? `${displayPrice.value.min} - ${displayPrice.value.sug}` 
+                        : displayPrice.value.final;
+                    
+                    // Formatowanie mutacji - nazwy statystyk są pogrubione
+                    const muts = mainStats
+                        .filter(s => selectedMutations.value[s.mutKey])
+                        .map(s => `• **${s.label}:** +${selectedMutations.value[s.mutKey]} pkt`)
+                        .join('\n');
+                    
+                    const baseLvlText = activeBase.value ? activeBase.value.LVL : baseLevel.value;
+                    const kastratValue = isKastratActive.value ? 'TAK' : 'NIE';
+                    
+                    const text = `📦 **HALUSZKI SHOP - ZAMÓWIENIE**\n` +
+                                 `🦖 **Stworzenie:** ${selectedDinoName.value}\n` +
+                                 `📊 **Poziom:** ${calculatedLevel.value} (Baza: ${baseLvlText} LVL)\n` +
+                                 `💰 **Cena:** ${priceStr} DD\n` +
+                                 `🛠️ **Konfiguracja:**\n${muts || '• Brak dodatkowych mutacji'}\n` +
+                                 `✂️ **Kastrat:** ${kastratValue}`;
+                                 
                     navigator.clipboard.writeText(text);
                     showToast("Skopiowano!");
                 };
@@ -828,6 +879,7 @@
                         return result;
                     }).join(' ');
                 };
+
                 onMounted(() => {
                     try {
                         iconList.value = ICON_DATA;
@@ -864,6 +916,7 @@
                         });
                     } catch(e) { console.error("App error:", e); }
                 });
+
                 watchEffect(() => { 
                     // Śledź zmiany danych i stanu widoku
                     const _ = rawData.value;
@@ -886,3 +939,5 @@
     </script>
 </body>
 </html>
+
+

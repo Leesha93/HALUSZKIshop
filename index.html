@@ -129,11 +129,16 @@
 
         <!-- Main Content -->
         <main class="flex-1 min-w-0 p-4 md:p-12 overflow-y-auto custom-scrollbar relative z-0">
-            <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-10">
-                <div class="flex flex-col lg:flex-row gap-10 items-start">
+            <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-6">
+                <!-- Back Button -->
+                <button @click="goHome" class="group flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#d4a358]/50 hover:bg-[#d4a358]/5 transition-all duration-300">
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-primary group-hover:-translate-x-1 transition-transform"></i>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-[#a68d60] group-hover:text-primary transition-colors">Powrót do katalogu</span>
+                </button>
+                <div class="flex flex-col lg:flex-row gap-8 items-start">
                     <div class="w-full lg:w-2/5 group">
                         <!-- Desktop Image -->
-                        <div class="hidden md:flex aspect-square glass rounded-3xl overflow-hidden relative items-center justify-center border-2 border-[#d4a358]/20 group-hover:border-[#d4a358]/40 transition-all duration-500 shadow-2xl mb-10 pointer-events-none">
+                        <div class="hidden md:flex aspect-square glass rounded-3xl overflow-hidden relative items-center justify-center border-2 border-[#d4a358]/20 group-hover:border-[#d4a358]/40 transition-all duration-500 shadow-2xl pointer-events-none">
                             <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(212,163,88,0.1),transparent)]"></div>
                             <img v-if="getDinoImg(selectedDinoName)" :src="'ico/' + getDinoImg(selectedDinoName)" class="w-64 h-64 object-contain z-10 drop-shadow-2xl transform group-hover:scale-110 transition-all duration-700 pointer-events-none">
                             <img v-else src="raw.png" class="w-48 h-48 object-contain opacity-5 grayscale pointer-events-none">
@@ -154,8 +159,8 @@
                             </div>
                             <h2 class="font-black text-white tracking-tighter uppercase leading-none" :style="{ fontSize: '1.8rem' }">{{ selectedDinoName }}</h2>
                         </div>
-                        <div class="mt-6 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
+                        <div class="mt-6 space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
                                 <div class="glass p-5 rounded-2xl border-l-4 border-[#d4a358] relative flex flex-col justify-center items-center text-center">
                                     <label class="text-[10px] text-[#a68d60] uppercase font-black tracking-widest block mb-1">Poziom Całkowity (LVL)</label>
                                     <div class="text-4xl font-black text-white leading-none">{{ calculatedLevel }}</div>
@@ -227,7 +232,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex-1 w-full space-y-8">
+                    <div class="flex-1 w-full space-y-6">
 
                         <div class="glass p-6 rounded-3xl border border-[#d4a358]/20 bg-gradient-to-br from-[#2a221a] to-[#1a1510]">
                             <h3 class="text-xl font-black uppercase tracking-wider mb-8 flex items-center gap-3"><i data-lucide="dna" class="text-primary w-6 h-6"></i>STATYSTYKI I MUTACJE</h3>
@@ -262,7 +267,7 @@
                             Wariant dostępny w ciągu 2-12h
                             <span v-if="bestMatchVariant.KASTRAT" class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px] ml-2 font-black uppercase tracking-widest">KASTRAT</span>
                         </div>
-                        <div class="pt-6 flex flex-col sm:flex-row gap-4">
+                        <div class="flex flex-col sm:flex-row gap-4">
                             <button @click="copyOrder" class="btn-primary flex-1 py-5 px-8 rounded-2xl font-black text-[#1a1510] flex items-center justify-center uppercase tracking-widest text-sm shadow-xl disabled:opacity-30 disabled:cursor-not-allowed">Kopiuj Zamówienie</button>
                             <button @click="resetFilters" class="glass py-5 px-8 rounded-2xl font-black text-cream flex items-center justify-center hover:bg-white/5 transition-colors uppercase tracking-widest text-sm border-2 border-[#d4a358]/20">Resetuj</button>
                         </div>
@@ -939,5 +944,3 @@
     </script>
 </body>
 </html>
-
-

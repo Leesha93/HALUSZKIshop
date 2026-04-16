@@ -30,6 +30,7 @@
             background-image: 
                 radial-gradient(circle at 10% 10%, rgba(212, 163, 88, 0.03) 0%, transparent 40%),
                 radial-gradient(circle at 90% 90%, rgba(212, 163, 88, 0.03) 0%, transparent 40%);
+            background-attachment: fixed;
         }
         .glass {
             background: rgba(42, 34, 26, 0.8);
@@ -76,6 +77,58 @@
             border-radius: 4px; display: flex; align-items: center; justify-content: center;
         }
         .active .checkbox-box { border-color: rgba(26, 21, 16, 0.6); background: rgba(26, 21, 16, 0.1); }
+
+        /* Skeleton Shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, 
+                rgba(212, 163, 88, 0.05) 25%, 
+                rgba(212, 163, 88, 0.12) 50%, 
+                rgba(212, 163, 88, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer-animation 1.5s infinite linear;
+        }
+        @keyframes shimmer-animation {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* List Transitions */
+        .list-enter-active, .list-leave-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(20px) scale(0.95); }
+        .list-move { transition: transform 0.4s ease; }
+
+        /* Card/Content Transitions */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        .slide-up-enter-active { transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .slide-up-enter-from { opacity: 0; transform: translateY(40px); }
+
+        /* Button & Card Micro-hover */
+        .hover-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 30px -5px rgba(212, 163, 88, 0.2); border-color: rgba(212, 163, 88, 0.4) !important; }
+        
+        .btn-hover { transition: all 0.2s ease; }
+        .btn-hover:hover { filter: brightness(1.2); transform: translateY(-1px); }
+        .btn-hover:active { transform: translateY(0); }
+        
+        /* Price Range Slider */
+        .price-slider {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        .price-slider:focus { outline: none; }
+        .price-slider::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer;
+            background: rgba(212, 163, 88, 0.2);
+            border-radius: 10px; border: 1px solid rgba(212, 163, 88, 0.1);
+        }
+        .price-slider::-webkit-slider-thumb {
+            border: 2px solid #1a1510; height: 16px; width: 16px; border-radius: 50%;
+            background: #d4a358; cursor: pointer; -webkit-appearance: none;
+            margin-top: -6px; box-shadow: 0 0 10px rgba(212,163,88,0.5);
+            transition: all 0.2s ease;
+        }
+        .price-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
     </style>
 </head>
 <body class="antialiased font-medium">
@@ -101,6 +154,14 @@
                 <div class="mt-4 relative">
                     <input type="text" v-model="searchQuery" placeholder="Szukaj stworzenia..." class="w-full bg-[#1a1510]/50 border border-[#d4a358]/20 rounded-xl py-3 px-4 pl-11 focus:outline-none focus:ring-2 focus:ring-[#d4a358]/50 text-sm transition-all focus:bg-[#1a1510] text-cream">
                     <i data-lucide="search" class="absolute left-4 top-3.5 w-4 h-4 text-primary opacity-50"></i>
+                </div>
+                <!-- Price Filter -->
+                <div class="mt-5 glass p-3 rounded-xl border border-[#d4a358]/20">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[9px] uppercase font-black tracking-widest text-[#a68d60]">Maksymalna Cena</label>
+                        <span class="text-[10px] font-black text-[#d4a358]">{{ maxPriceFilter >= maxAvailablePrice ? 'Bez limitu' : formatPrice(maxPriceFilter) + ' DD' }}</span>
+                    </div>
+                    <input type="range" v-model.number="maxPriceFilter" min="500" :max="maxAvailablePrice" step="500" class="price-slider">
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-0.5">
@@ -129,9 +190,10 @@
 
         <!-- Main Content -->
         <main class="flex-1 min-w-0 p-4 md:p-12 overflow-y-auto custom-scrollbar relative z-0">
-            <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-6">
+            <transition name="slide-up">
+                <div v-if="selectedDino" class="max-w-5xl mx-auto space-y-6">
                 <!-- Back Button -->
-                <button @click="goHome" class="group flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#d4a358]/50 hover:bg-[#d4a358]/5 transition-all duration-300">
+                <button @click="goHome" class="group flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-[#d4a358]/50 hover:bg-[#d4a358]/5 transition-all duration-300 btn-hover">
                     <i data-lucide="arrow-left" class="w-5 h-5 text-primary group-hover:-translate-x-1 transition-transform"></i>
                     <span class="text-[10px] font-black uppercase tracking-widest text-[#a68d60] group-hover:text-primary transition-colors">Powrót do katalogu</span>
                 </button>
@@ -268,13 +330,16 @@
                             <span v-if="bestMatchVariant.KASTRAT" class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px] ml-2 font-black uppercase tracking-widest">KASTRAT</span>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <button @click="copyOrder" class="btn-primary flex-1 py-5 px-8 rounded-2xl font-black text-[#1a1510] flex items-center justify-center uppercase tracking-widest text-sm shadow-xl disabled:opacity-30 disabled:cursor-not-allowed">Kopiuj Zamówienie</button>
-                            <button @click="resetFilters" class="glass py-5 px-8 rounded-2xl font-black text-cream flex items-center justify-center hover:bg-white/5 transition-colors uppercase tracking-widest text-sm border-2 border-[#d4a358]/20">Resetuj</button>
+                            <button @click="copyOrder" class="btn-primary flex-1 py-5 px-8 rounded-2xl font-black text-[#1a1510] flex items-center justify-center uppercase tracking-widest text-sm shadow-xl disabled:opacity-30 disabled:cursor-not-allowed btn-hover">Kopiuj Zamówienie</button>
+                            <button @click="resetFilters" class="glass py-5 px-8 rounded-2xl font-black text-cream flex items-center justify-center hover:bg-white/5 transition-colors uppercase tracking-widest text-sm border-2 border-[#d4a358]/20 btn-hover">Resetuj</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div v-else class="h-full">
+        </transition>
+
+            <transition name="fade">
+                <div v-if="!selectedDino" class="h-full">
                 <div class="mb-8 glass p-6 rounded-3xl border border-[#d4a358]/20 bg-gradient-to-br from-[#2a221a] to-[#1a1510]">
                     <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">Witamy w Haluszki Shop</h2>
                     <p class="text-[#a68d60] mb-2">Przeglądaj, porównuj i zamawiaj wyjątkowe stwory wprost z ARK: Survival Ascended.</p>
@@ -290,47 +355,86 @@
                     <p class="text-[#a68d60] font-bold uppercase text-[10px] tracking-[0.2em]">Haluszki Shop - Mroczne zakamarki</p>
                 </div>
 
-                <!-- Filtry Kategorii -->
-                <div class="flex flex-wrap gap-2 mb-8">
+                <!-- Filtry Kategorii i Sortowanie -->
+                <div class="flex flex-wrap items-center gap-2 mb-8 w-full">
                     <button @click="selectedCategory = null" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === null ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Wszystkie
                     </button>
                     <button @click="selectedCategory = 'mutated'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'mutated' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="dna" class="w-3.5 h-3.5"></i> Mutowane
                     </button>
                     <button @click="selectedCategory = 'gryzak'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'gryzak' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="swords" class="w-3.5 h-3.5"></i> Bojowe
                     </button>
                     <button @click="selectedCategory = 'zbieracz'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'zbieracz' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="pickaxe" class="w-3.5 h-3.5"></i> Użytkowe
                     </button>
                     <button @click="selectedCategory = 'latacz'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'latacz' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="wind" class="w-3.5 h-3.5"></i> Latające
                     </button>
                     <button @click="selectedCategory = 'wodny'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'wodny' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="waves" class="w-3.5 h-3.5"></i> Wodne
                     </button>
                     <button @click="selectedCategory = 'pet'" 
-                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2', 
+                            :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
                                      selectedCategory === 'pet' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
                         <i data-lucide="heart" class="w-3.5 h-3.5"></i> Towarzysze
                     </button>
+
+                    <div class="h-6 w-px bg-[#d4a358]/20 mx-2 hidden lg:block"></div>
+
+                    <!-- Sortowanie jako przyciski -->
+                    <div class="flex items-center gap-1.5 w-full lg:w-auto mt-2 lg:mt-0">
+                        <span class="text-[9px] text-[#a68d60] font-bold uppercase tracking-widest mr-1">Sortuj:</span>
+                        <button @click="sortBy = 'alpha'" 
+                                :class="['px-3 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all btn-hover', 
+                                         sortBy === 'alpha' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
+                            A-Z
+                        </button>
+                        <button @click="sortBy = 'lvl'" 
+                                :class="['px-3 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all btn-hover', 
+                                         sortBy === 'lvl' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
+                            LVL
+                        </button>
+                        <button @click="sortBy = 'price'" 
+                                :class="['px-3 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all btn-hover', 
+                                         sortBy === 'price' ? 'bg-[#d4a358] text-[#1a1510]' : 'glass text-white/60 hover:text-white hover:bg-white/5']">
+                            Cena
+                        </button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 sm:gap-4 justify-items-center">
+
+                <!-- Skeleton Screen -->
+                <div v-if="isLoading" class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 sm:gap-4 justify-items-center">
+                    <div v-for="i in 12" :key="'skeleton-'+i" 
+                         class="glass w-full max-w-[140px] p-2 rounded-2xl border border-[#d4a358]/10 flex flex-col items-center gap-2">
+                        <div class="w-20 h-20 rounded-xl bg-[#1a1510] border border-[#d4a358]/10 shimmer"></div>
+                        <div class="h-4 w-20 rounded bg-[#1a1510] shimmer"></div>
+                        <div class="h-3 w-12 rounded bg-[#1a1510] opacity-50 shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Dinosaur Gallery -->
+                <transition-group 
+                    v-if="!isLoading"
+                    name="list" 
+                    tag="div" 
+                    class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 sm:gap-4 justify-items-center"
+                >
                     <div v-for="dino in filteredDinos" :key="dino.name" @click="selectDino(dino.name)" 
-                         class="glass group w-full max-w-[140px] p-2 rounded-2xl border border-[#d4a358]/10 hover:border-[#d4a358]/40 transition-all duration-500 cursor-pointer flex flex-col items-center text-center gap-2">
+                         class="glass group w-full max-w-[140px] p-2 rounded-2xl border border-[#d4a358]/10 hover:border-[#d4a358]/40 hover-card cursor-pointer flex flex-col items-center text-center gap-2">
                         
                         <div class="w-20 h-20 rounded-xl bg-[#1a1510] border border-[#d4a358]/10 flex items-center justify-center overflow-hidden transition-all relative">
                             <img v-if="getDinoImg(dino.name)" :src="'ico/' + getDinoImg(dino.name)" class="w-16 h-16 object-contain transform group-hover:scale-110 transition-all duration-700 invert brightness-200 opacity-80 group-hover:opacity-100">
@@ -375,7 +479,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </transition-group>
 
                 <div v-if="filteredDinos.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
@@ -385,7 +489,10 @@
                     <div class="text-[10px] text-[#a68d60]/40 font-bold mt-1">Spróbuj zmienić parametry wyszukiwania</div>
                 </div>
             </div>
-            <div v-if="toast.show" class="fixed bottom-10 right-10 bg-[#d4a358] text-[#1a1510] px-8 py-4 rounded-2xl flex items-center gap-4 z-50 shadow-2xl border-2 border-white/20"><i data-lucide="check-circle-2" class="w-6 h-6"></i><span class="font-black uppercase tracking-widest text-sm">{{ toast.message }}</span></div>
+        </transition>
+            <transition name="fade">
+                <div v-if="toast.show" class="fixed bottom-10 right-10 bg-[#d4a358] text-[#1a1510] px-8 py-4 rounded-2xl flex items-center gap-4 z-[2000] shadow-2xl border-2 border-white/20"><i data-lucide="check-circle-2" class="w-6 h-6"></i><span class="font-black uppercase tracking-widest text-sm">{{ toast.message }}</span></div>
+            </transition>
         </main>
     </div>
 
@@ -401,8 +508,10 @@
                 // =========================================================
                 // DINO_REGISTRY is now loaded from ark_data.js as a global constant.
 
-                const rawData = ref([]); const iconList = ref([]); const searchQuery = ref(""); const selectedCategory = ref(null); const hoveredDino = ref(null); const selectedDinoName = ref(""); const selectedMutations = ref({}); const toast = ref({ show: false, message: "" });
+                const rawData = ref([]); const iconList = ref([]); const searchQuery = ref(""); const selectedCategory = ref(null); const sortBy = ref("alpha"); const hoveredDino = ref(null); const selectedDinoName = ref(""); const selectedMutations = ref({}); const toast = ref({ show: false, message: "" });
+                const isLoading = ref(true);
                 const isKastratSelected = ref(false); const preferredBaseIndex = ref(0); const isSidebarOpen = ref(false);
+                const maxPriceFilter = ref(50000);
                 const mutationCosts = ref({});
                 const mainStats = [
                     { key: 'HP', label: 'Zdrowie', img: '30px-Health.webp', filter: 'brightness(0) saturate(100%) invert(20%) sepia(85%) saturate(1612%) hue-rotate(338deg) brightness(98%) contrast(92%)', mutKey: 'mut HP' }, // #8b2c2c
@@ -422,6 +531,7 @@
                                 typ: item.typ, 
                                 variants: [],
                                 maxBaseLevel: 0,
+                                maxBasePrice: 0,
                                 representativeStats: {},
                                 hasMutations: false
                             };
@@ -433,23 +543,40 @@
                         
                         if (mutSum > 0) groups[name].hasMutations = true;
                         
-                        if (mutSum === 0 && baseLvl >= groups[name].maxBaseLevel) {
-                            groups[name].maxBaseLevel = baseLvl;
-                            // Store base values for hover display
-                            const stats = {};
-                            mainStats.forEach(s => stats[s.key] = parseInt(item[s.key]) || 0);
-                            groups[name].representativeStats = stats;
+                        if (mutSum === 0) {
+                            if (baseLvl >= groups[name].maxBaseLevel) {
+                                groups[name].maxBaseLevel = baseLvl;
+                                // Store base values for hover display
+                                const stats = {};
+                                mainStats.forEach(s => stats[s.key] = parseInt(item[s.key]) || 0);
+                                groups[name].representativeStats = stats;
+                            }
+                            const c = item.CENA ? parseInt(item.CENA.replace(/\s/g, '')) : 0;
+                            if (!isNaN(c) && c > groups[name].maxBasePrice) {
+                                groups[name].maxBasePrice = c;
+                            }
                         }
                     });
-                    return Object.values(groups).sort((a,b) => a.name.localeCompare(b.name));
-                });
-                const filteredDinos = computed(() => {
-                    let filtered = processedData.value;
+                     return Object.values(groups).sort((a,b) => a.name.localeCompare(b.name));
+                 });
+
+                 const maxAvailablePrice = computed(() => {
+                     if (!processedData.value || processedData.value.length === 0) return 50000;
+                     return Math.max(...processedData.value.map(d => d.maxBasePrice));
+                 });
+
+                 const filteredDinos = computed(() => {
+                    let filtered = [...processedData.value];
                     
                     // Filter by Search Query
                     if (searchQuery.value) {
                         const query = searchQuery.value.toLowerCase();
                         filtered = filtered.filter(d => d.name.toLowerCase().includes(query) || d.typ.toLowerCase().includes(query));
+                    }
+                    
+                    // Filter by Max Price
+                    if (maxPriceFilter.value < maxAvailablePrice.value) {
+                        filtered = filtered.filter(d => d.maxBasePrice > 0 && d.maxBasePrice <= maxPriceFilter.value);
                     }
                     
                     // Filter by Category
@@ -459,6 +586,25 @@
                         } else {
                             filtered = filtered.filter(d => d.typ.toLowerCase() === selectedCategory.value.toLowerCase());
                         }
+                    }
+                    
+                    // Sorting
+                    if (sortBy.value === 'lvl') {
+                        filtered.sort((a, b) => {
+                            if (a.maxBaseLevel === 0 && b.maxBaseLevel === 0) return a.name.localeCompare(b.name);
+                            if (a.maxBaseLevel === 0) return 1;
+                            if (b.maxBaseLevel === 0) return -1;
+                            return a.maxBaseLevel - b.maxBaseLevel;
+                        });
+                    } else if (sortBy.value === 'price') {
+                        filtered.sort((a, b) => {
+                            if (a.maxBasePrice === 0 && b.maxBasePrice === 0) return a.name.localeCompare(b.name);
+                            if (a.maxBasePrice === 0) return 1;
+                            if (b.maxBasePrice === 0) return -1;
+                            return a.maxBasePrice - b.maxBasePrice;
+                        });
+                    } else {
+                        filtered.sort((a, b) => a.name.localeCompare(b.name));
                     }
                     
                     return filtered;
@@ -795,7 +941,7 @@
                     return { base: baseVal, mut: mutVal, sum: baseVal + mutVal };
                 };
                 const onDataLoaded = () => {
-                    // No need to pre-calculate mutation costs anymore
+                    maxPriceFilter.value = maxAvailablePrice.value;
                 };
                 const getDinoImg = (name) => {
                     if (!name) return null;
@@ -913,6 +1059,11 @@
                                     if (typeof lucide !== 'undefined') lucide.createIcons(); 
                                 });
                                 onDataLoaded();
+                                
+                                // Elegant loading delay
+                                setTimeout(() => {
+                                    isLoading.value = false;
+                                }, 800);
                             },
                             error: (err) => {
                                 console.error("CSV loading error:", err);
@@ -928,12 +1079,13 @@
                     const __ = filteredDinos.value;
                     const ___ = selectedDinoName.value;
                     const ____ = selectedCategory.value;
+                    const _____ = sortBy.value;
                     
                     if (typeof lucide !== 'undefined') nextTick(() => lucide.createIcons()); 
                 });
                 return {
-                    searchQuery, selectedCategory, hoveredDino, filteredDinos, selectedDinoName, selectedDino, selectedMutations,
-                    mainStats, toast, bestMatchVariant, calculatedLevel, displayPrice, baseLevel, selectionMutationTotal,
+                    searchQuery, selectedCategory, sortBy, hoveredDino, filteredDinos, selectedDinoName, selectedDino, selectedMutations, maxPriceFilter, maxAvailablePrice,
+                    isLoading, mainStats, toast, bestMatchVariant, calculatedLevel, displayPrice, baseLevel, selectionMutationTotal,
                     isKastratRequired, isKastratSelected, isKastratActive, calculatedPrice, hasMutations, dinoNameFontSize, isSidebarOpen,
                     baseVariants, preferredBaseIndex, activeBase, getMutationCost, pricingInfo, selectedDinoDLC,
                     selectDino, goHome, resetFilters, toggleMutation, toggleKastrat, availableMutations, formatStatDisplay, getStatValue,
@@ -944,3 +1096,5 @@
     </script>
 </body>
 </html>
+
+

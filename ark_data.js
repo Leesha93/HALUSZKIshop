@@ -174,7 +174,7 @@ const ICON_DATA = [
 ];
 const DINO_REGISTRY = {
                     "ACHATINA": { base: 500, variants: { "ABERRANT": 700 } },
-					"Acrocanthosaurus" { base: 2800, variants: { "S (MOD)": 3800 }, img: "Acrocanthosaurus.webp" },
+					"ACROCANTHOSAURUS" { base: 2800, variants: { "S (MOD)": 3800 }, img: "Acrocanthosaurus.webp" },
                     "ALLOSAURUS": { base: 1800, variants: { "R": 2000, "S (MOD)": 2300, "X": 2000 } },
                     "AMARGASAURUS": { base: 3000 },
                     "ANDREWSARCHUS": { base: 1800, variants: { "S (MOD)": 2800 } },

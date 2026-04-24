@@ -1,8 +1,8 @@
 const ICON_DATA = [
     "Achatina.png",
+	"Acrocanthosaurus.webp",
     "Allosaurus.png",
     "Amargasaurus.png",
-	"Acrocanthosaurus.webp",
     "Ammonite.png",
     "Andrewsarchus.png",
     "Anglerfish.png",

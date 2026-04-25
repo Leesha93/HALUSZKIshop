@@ -1,6 +1,6 @@
 const ICON_DATA = [
     "Achatina.png",
-	"Acrocanthosaurus.webp",
+    "Acrocanthosaurus.webp",
     "Allosaurus.png",
     "Amargasaurus.png",
     "Ammonite.png",
@@ -169,12 +169,11 @@ const ICON_DATA = [
     "YiLing.avif",
     "Yuthyrannus.avif",
     "malwyn.avif",
-    "ossidon.avif",
     "Solwyn.avif"
 ];
 const DINO_REGISTRY = {
                     "ACHATINA": { base: 500, variants: { "ABERRANT": 700 } },
-					"ACROCANTHOSAURUS": { base: 2800, variants: { "S (MOD)": 3800 }, img: "Acrocanthosaurus.webp" },
+                    "ACROCANTHOSAURUS": { base: 2800, variants: { "S (MOD)": 3800 }, img: "Acrocanthosaurus.webp" },
                     "ALLOSAURUS": { base: 1800, variants: { "R": 2000, "S (MOD)": 2300, "X": 2000 } },
                     "AMARGASAURUS": { base: 3000 },
                     "ANDREWSARCHUS": { base: 1800, variants: { "S (MOD)": 2800 } },
@@ -352,3 +351,5 @@ const DINO_REGISTRY = {
                     "YI LING": { base: 2500, img: "YiLing.avif" },
                     "YUTHYRANNUS": { base: 2400, variants: { "X": 2600 }, img: "Yuthyrannus.avif" }
                 };
+
+

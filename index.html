@@ -271,23 +271,36 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-center pt-2">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                                     <button @click="toggleKastrat" 
                                             :disabled="isKastratRequired"
-                                            class="flex items-center gap-3 px-6 py-3 w-full rounded-xl border-2 transition-all duration-300 group justify-center"
+                                            class="flex items-center gap-3 px-4 py-3 w-full rounded-xl border-2 transition-all duration-300 group justify-center"
                                             :class="{
                                                 'bg-[#d4a358] border-[#d4a358] text-black shadow-[0_0_15px_rgba(212,163,88,0.2)]': isKastratSelected && !isKastratRequired,
                                                 'bg-transparent border-[#d4a358]/30 text-[#d4a358] hover:border-[#d4a358]': !isKastratSelected && !isKastratRequired,
                                                 'bg-white/5 border-white/10 text-white/20 grayscale pointer-events-none': isKastratRequired
                                             }">
-                                        <div class="w-5 h-5 rounded flex items-center justify-center border-2 transition-all"
-                                             :class="isKastratSelected ? 'border-current' : 'border-current opacity-40'">
-                                            <span v-if="isKastratSelected" class="text-xs font-black">X</span>
-                                        </div>
+                                        <i data-lucide="scissors" class="w-5 h-5 shrink-0" :class="isKastratSelected ? 'text-black' : 'opacity-40'"></i>
                                         <div class="flex flex-col items-start leading-none text-left">
                                             <span class="text-[10px] font-black uppercase tracking-widest">{{ (isKastratRequired || bestMatchVariant?.KASTRAT) ? 'Kastracja Wymagana' : 'Kupno jako kastrat' }}</span>
                                             <span v-if="!isKastratRequired" class="text-[8px] font-bold opacity-70 mt-0.5 uppercase">Rabat -20% </span>
                                             <span v-else class="text-[8px] font-bold opacity-40 mt-0.5 uppercase">Brak rabatu (Skonfigurowany kastrat)</span>
+                                        </div>
+                                    </button>
+
+                                    <button @click="isSaddleSelected = !isSaddleSelected" 
+                                            :disabled="!selectedDino.hasSaddle"
+                                            class="flex items-center gap-3 px-4 py-3 w-full rounded-xl border-2 transition-all duration-300 group justify-center"
+                                            :class="{
+                                                'bg-[#d4a358] border-[#d4a358] text-black shadow-[0_0_15px_rgba(212,163,88,0.2)]': isSaddleSelected && selectedDino.hasSaddle,
+                                                'bg-transparent border-[#d4a358]/30 text-[#d4a358] hover:border-[#d4a358]': !isSaddleSelected && selectedDino.hasSaddle,
+                                                'bg-white/5 border-white/10 text-white/20 grayscale pointer-events-none': !selectedDino.hasSaddle
+                                            }">
+                                        <i data-lucide="shield" class="w-5 h-5 shrink-0" :class="isSaddleSelected ? 'text-black' : 'opacity-40'"></i>
+                                        <div class="flex flex-col items-start leading-none text-left">
+                                            <span class="text-[10px] font-black uppercase tracking-widest">Siodło MAX Armor</span>
+                                            <span v-if="selectedDino.hasSaddle" class="text-[8px] font-bold opacity-70 mt-0.5 uppercase">Dopłata +600 DD</span>
+                                            <span v-else class="text-[8px] font-bold opacity-40 mt-0.5 uppercase">Niedostępne dla gatunku</span>
                                         </div>
                                     </button>
                                 </div>
@@ -510,7 +523,7 @@
 
                 const rawData = ref([]); const iconList = ref([]); const searchQuery = ref(""); const selectedCategory = ref(null); const sortBy = ref("alpha"); const hoveredDino = ref(null); const selectedDinoName = ref(""); const selectedMutations = ref({}); const toast = ref({ show: false, message: "" });
                 const isLoading = ref(true);
-                const isKastratSelected = ref(false); const preferredBaseIndex = ref(0); const isSidebarOpen = ref(false);
+                const isKastratSelected = ref(false); const isSaddleSelected = ref(false); const preferredBaseIndex = ref(0); const isSidebarOpen = ref(false);
                 const maxPriceFilter = ref(50000);
                 const mutationCosts = ref({});
                 const mainStats = [
@@ -533,10 +546,15 @@
                                 maxBaseLevel: 0,
                                 maxBasePrice: 0,
                                 representativeStats: {},
-                                hasMutations: false
+                                hasMutations: false,
+                                hasSaddle: false
                             };
                         }
                         groups[name].variants.push(item);
+                        
+                        if (item['SIODLO MAX'] === 'X' || item['SIODLO MAX'] === 'x') {
+                            groups[name].hasSaddle = true;
+                        }
                         
                         const mutSum = mainStats.reduce((sum, s) => sum + (parseInt(item[s.mutKey]) || 0), 0);
                         const baseLvl = (parseInt(item.LVL) || 0) - mutSum;
@@ -854,6 +872,13 @@
                         sugVal = isKastratSelected.value ? Math.ceil((calc.sug * 0.8) / 100) * 100 : calc.sug;
                         finalVal = minVal;
                     }
+
+                    if (isSaddleSelected.value) {
+                        minVal += 600;
+                        sugVal += 600;
+                        finalVal += 600;
+                    }
+
                     return {
                         min: formatPrice(minVal),
                         sug: formatPrice(sugVal),
@@ -914,7 +939,7 @@
                     if (selectedMutations.value[mutKey] === val) delete selectedMutations.value[mutKey];
                     else selectedMutations.value[mutKey] = val;
                 };
-                const resetFilters = () => { selectedMutations.value = {}; isKastratSelected.value = false; preferredBaseIndex.value = 0; };
+                const resetFilters = () => { selectedMutations.value = {}; isKastratSelected.value = false; isSaddleSelected.value = false; preferredBaseIndex.value = 0; };
                 const formatPrice = (p) => p ? p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "???";
                 const translateType = (typ) => {
                     const types = { 'gryzak': 'Bojowy', 'latacz': 'Latający', 'zbieracz': 'Użytkowy', 'wodny': 'Wodny', 'pet': 'Towarzysz' };
@@ -968,28 +993,32 @@
                 const copyOrder = () => {
                     const isCustom = !bestMatchVariant.value;
                     
-                    // Dla zamówień indywidualnych pokazujemy zakres, dla katalogowych jedną cenę
                     const priceStr = isCustom 
                         ? `${displayPrice.value.min} - ${displayPrice.value.sug}` 
                         : displayPrice.value.final;
                     
-                    // Formatowanie mutacji - nazwy statystyk są pogrubione
-                    const muts = mainStats
-                        .filter(s => selectedMutations.value[s.mutKey])
-                        .map(s => `• **${s.label}:** +${selectedMutations.value[s.mutKey]} pkt`)
-                        .join('\n');
+                    const activeMutations = mainStats.filter(s => selectedMutations.value[s.mutKey]);
+                    let mutsText = '';
+                    if (activeMutations.length > 0) {
+                        const muts = activeMutations.map(s => `• **${s.label}:** +${selectedMutations.value[s.mutKey]} pkt`).join('\n');
+                        mutsText = `🛠️ **Konfiguracja:**\n${muts}\n`;
+                    }
                     
                     const baseLvlText = activeBase.value ? activeBase.value.LVL : baseLevel.value;
-                    const kastratValue = isKastratActive.value ? 'TAK' : 'NIE';
                     
-                    const text = `📦 **HALUSZKI SHOP - ZAMÓWIENIE**\n` +
+                    let extras = '';
+                    if (isKastratActive.value) extras += `✂️ **Kastrat:** TAK\n`;
+                    if (isSaddleSelected.value) extras += `🐎 **Siodło:** MAX ARMOR (+600 DD)\n`;
+                    
+                    let text = `📦 **HALUSZKI SHOP - ZAMÓWIENIE**\n` +
                                  `🦖 **Stworzenie:** ${selectedDinoName.value}\n` +
                                  `📊 **Poziom:** ${calculatedLevel.value} (Baza: ${baseLvlText} LVL)\n` +
-                                 `💰 **Cena:** ${priceStr} DD\n` +
-                                 `🛠️ **Konfiguracja:**\n${muts || '• Brak dodatkowych mutacji'}\n` +
-                                 `✂️ **Kastrat:** ${kastratValue}`;
-                                 
-                    navigator.clipboard.writeText(text);
+                                 `💰 **Cena:** ${priceStr} DD\n`;
+                    
+                    if (mutsText) text += mutsText;
+                    if (extras) text += extras;
+                    
+                    navigator.clipboard.writeText(text.trim());
                     showToast("Skopiowano!");
                 };
                 const showToast = (msg) => { toast.value = { show: true, message: msg }; setTimeout(() => toast.value.show = false, 3000); };
@@ -1086,7 +1115,7 @@
                 return {
                     searchQuery, selectedCategory, sortBy, hoveredDino, filteredDinos, selectedDinoName, selectedDino, selectedMutations, maxPriceFilter, maxAvailablePrice,
                     isLoading, mainStats, toast, bestMatchVariant, calculatedLevel, displayPrice, baseLevel, selectionMutationTotal,
-                    isKastratRequired, isKastratSelected, isKastratActive, calculatedPrice, hasMutations, dinoNameFontSize, isSidebarOpen,
+                    isKastratRequired, isKastratSelected, isKastratActive, isSaddleSelected, calculatedPrice, hasMutations, dinoNameFontSize, isSidebarOpen,
                     baseVariants, preferredBaseIndex, activeBase, getMutationCost, pricingInfo, selectedDinoDLC,
                     selectDino, goHome, resetFilters, toggleMutation, toggleKastrat, availableMutations, formatStatDisplay, getStatValue,
                     formatPrice, translateType, translateDLC, getDinoImg, copyOrder, hyphenateName

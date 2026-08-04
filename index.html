@@ -129,10 +129,26 @@
             transition: all 0.2s ease;
         }
         .price-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+                /* Mozilla (Firefox / Zen Browser) Styles */
+        .price-slider::-moz-range-track {
+            width: 100%; height: 6px; cursor: pointer;
+            background: rgba(212, 163, 88, 0.2);
+            border-radius: 10px; border: 1px solid rgba(212, 163, 88, 0.1);
+        }
+        .price-slider::-moz-range-thumb {
+            border: 2px solid #1a1510; height: 16px; width: 16px; border-radius: 50%;
+            background: #d4a358; cursor: pointer;
+            box-shadow: 0 0 10px rgba(212, 163, 88, 0.5);
+            transition: all 0.2s ease;
+        }
+        .price-slider::-moz-range-thumb:hover { transform: scale(1.2); }
     </style>
 </head>
 <body class="antialiased font-medium">
     <div id="app" v-cloak class="min-h-screen flex flex-col md:flex-row relative">
+        
+
+        
         <!-- Mobile Header -->
         <div class="md:hidden glass border-b border-[#3d2b1f] p-4 flex items-center justify-between sticky top-0 z-[60]">
             <img src="raw.png" alt="Haluszki Shop" class="h-12 logo-glow cursor-pointer" @click="goHome">

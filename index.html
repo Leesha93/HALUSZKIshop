@@ -503,7 +503,7 @@
                                 
                                 <div class="mt-2.5 pt-1.5 border-t border-[#d4a358]/10 w-full flex justify-between items-center px-0.5">
                                     <span class="text-[6px] text-[#a68d60] font-bold uppercase tracking-tighter">CENA</span>
-                                    <span v-if="dino.maxBaseLevel > 0" class="text-[7px] text-[#d4a358] font-black">{{ pricingInfo.baseSpeciesPrice }} DD</span>
+                                    <span v-if="dino.maxBasePrice > 0" class="text-[7px] text-[#d4a358] font-black">{{ formatPrice(dino.maxBasePrice) }} DD</span>
                                 </div>
                             </div>
                         </div>

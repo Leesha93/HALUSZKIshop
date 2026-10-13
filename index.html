@@ -146,9 +146,6 @@
 </head>
 <body class="antialiased font-medium">
     <div id="app" v-cloak class="min-h-screen flex flex-col md:flex-row relative">
-        
-
-        
         <!-- Mobile Header -->
         <div class="md:hidden glass border-b border-[#3d2b1f] p-4 flex items-center justify-between sticky top-0 z-[60]">
             <img src="raw.png" alt="Haluszki Shop" class="h-12 logo-glow cursor-pointer" @click="goHome">
@@ -765,6 +762,26 @@
                             { pts: 800, price: 36000 },
                             { pts: 1000, price: 42000 },
                             { pts: 1020, price: 42600 }
+                        ],
+                        5: [
+                            { pts: 50, price: 3000 },
+                            { pts: 250, price: 15000 },
+                            { pts: 490, price: 29400 },
+                            { pts: 500, price: 30000 },
+                            { pts: 750, price: 37500 },
+                            { pts: 1000, price: 45000 },
+                            { pts: 1250, price: 52500 },
+                            { pts: 1275, price: 53250 }
+                        ],
+                        6: [
+                            { pts: 60, price: 3600 },
+                            { pts: 300, price: 18000 },
+                            { pts: 588, price: 35280 },
+                            { pts: 600, price: 36000 },
+                            { pts: 900, price: 45000 },
+                            { pts: 1200, price: 54000 },
+                            { pts: 1500, price: 63000 },
+                            { pts: 1530, price: 63900 }
                         ]
                     },
                     speciesBase: DINO_REGISTRY
@@ -772,7 +789,15 @@
 
                 const interpolate = (table, key, target) => {
                     if (target <= table[0][key]) return table[0].price;
-                    if (target >= table[table.length - 1][key]) return table[table.length - 1].price;
+                    if (target >= table[table.length - 1][key]) {
+                        if (table.length >= 2) {
+                            const last = table[table.length - 1];
+                            const prev = table[table.length - 2];
+                            const slope = (last.price - prev.price) / (last[key] - prev[key]);
+                            return last.price + (target - last[key]) * slope;
+                        }
+                        return table[table.length - 1].price;
+                    }
                     for (let i = 0; i < table.length - 1; i++) {
                         const start = table[i];
                         const end = table[i + 1];
@@ -807,7 +832,7 @@
                     const entry = pricingData.speciesBase[species];
                     let baseSpeciesPrice = 10000;
                     if (entry) {
-                        baseSpeciesPrice = entry.base || 10000;
+                        baseSpeciesPrice = entry.base || (entry.variants && (entry.variants['(DLC)'] || entry.variants['DLC'])) || 10000;
                         if (variant && entry.variants) {
                             // Try exact variant match
                             if (entry.variants[variant]) {
@@ -842,14 +867,9 @@
                     const activeStatCount = mainStats.filter(s => selectedMutations.value[s.mutKey]).length;
                     if (activeStatCount > 0 && totalMut > 0) {
                         const scaling = pricingData.mutationScaling;
-                        if (activeStatCount === 1) {
-                            mutPrice10k = interpolate(scaling[1], 'pts', totalMut);
-                        } else if (activeStatCount === 2) {
-                            mutPrice10k = interpolate(scaling[2], 'pts', totalMut);
-                        } else if (activeStatCount === 3 && scaling[3]) {
-                            mutPrice10k = interpolate(scaling[3], 'pts', totalMut);
-                        } else if (scaling[4]) {
-                            mutPrice10k = interpolate(scaling[4], 'pts', totalMut);
+                        const targetScaling = scaling[activeStatCount] || scaling[Math.min(activeStatCount, 6)] || scaling[4];
+                        if (targetScaling) {
+                            mutPrice10k = interpolate(targetScaling, 'pts', totalMut);
                         }
                     }
                     const mutPriceSug10k = mutPrice10k * 1.2;
@@ -964,7 +984,7 @@
 
                 const translateDLC = (dlc) => {
                     if (!dlc) return "";
-                    const dlcMap = { 'LC': 'Lost Colony', 'FT': 'Fantastic Tames', 'ToF': 'Tides of Fortune' };
+                    const dlcMap = { 'LC': 'Lost Colony', 'FT': 'Fantastic Tames', 'ToF': 'Tides of Fortune', 'AST': 'Astraeos' };
                     return dlcMap[dlc] || dlc;
                 };
 

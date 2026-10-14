@@ -400,7 +400,7 @@
                     <button @click="selectedCategory = 'new'" 
                             :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover border', 
                                      selectedCategory === 'new' ? 'bg-amber-400 text-[#1a1510] border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'glass text-amber-400/80 border-amber-400/30 hover:text-amber-300 hover:bg-amber-400/10']">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> Nowości
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Nowości
                     </button>
                     <button @click="selectedCategory = 'mutated'" 
                             :class="['px-4 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 btn-hover', 
@@ -586,10 +586,7 @@
                         }
                         groups[name].variants.push(item);
 
-                        // Sprawdzanie oznaczenia NOWOŚĆ (z ark_data.js NEW_DINOS lub z kolumny CSV)
-                        const isNewFromList = (typeof NEW_DINOS !== 'undefined' && Array.isArray(NEW_DINOS)) ?
-                            NEW_DINOS.some(n => n && name.toUpperCase().includes(n.toUpperCase().trim())) : false;
-                        
+                        // Sprawdzanie oznaczenia NOWOŚĆ (wyłącznie z kolumny CSV: NOWOSC lub NOWOŚĆ)
                         const checkCsvVal = (key) => {
                             for (const k of Object.keys(item)) {
                                 if (k.trim().toUpperCase() === key.toUpperCase()) {
@@ -599,8 +596,7 @@
                             }
                             return false;
                         };
-                        const isNewFromCsv = checkCsvVal('NOWOSC') || checkCsvVal('NOWOŚĆ') || checkCsvVal('NEW');
-                        if (isNewFromList || isNewFromCsv) {
+                        if (checkCsvVal('NOWOSC') || checkCsvVal('NOWOŚĆ') || checkCsvVal('NEW')) {
                             groups[name].isNew = true;
                         }
                         

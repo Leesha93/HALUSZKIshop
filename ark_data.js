@@ -366,13 +366,3 @@ const DINO_REGISTRY = {
                     "YI LING": { base: 2500, img: "YiLing.avif" },
                     "YUTYRANNUS": { base: 2400, variants: { "S": 2900, "X": 2600 }, img: "Yuthyrannus.avif" }
 };
-
-// =========================================================
-// LISTA NOWOŚCI
-// Wpisz tutaj nazwy (lub fragmenty nazw) stworzeń, które mają mieć oznaczenie NOWOŚĆ.
-// Przykłady: "AURELIAX", "DREADMARE", "DEINOSUCHUS"
-// Możesz też dodać kolumnę "NOWOSC" z wartością "X" w pliku shop_list.csv / Excelu!
-// =========================================================
-const NEW_DINOS = [
-    "AURELIAX",
-];

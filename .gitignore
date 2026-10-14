@@ -6,3 +6,9 @@
 /~$aktualizuj_sklep.bat
 ignore/
 *.zip
+node_modules/
+screeny_discord/
+scripts/
+generuj_screeny.bat
+package.json
+package-lock.json

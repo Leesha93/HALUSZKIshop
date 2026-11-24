@@ -8,7 +8,8 @@ ignore/
 *.zip
 node_modules/
 screeny_discord/
-scripts/
+/scripts/
+!/.github/scripts/
 generuj_screeny.bat
 package.json
 package-lock.json

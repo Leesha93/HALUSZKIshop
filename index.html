@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haluszki Shop - Dinosaur Selector</title>
-    <link rel="icon" type="image/png" href="raw.png">
+    <link rel="icon" type="image/png" href="ui/raw.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -148,7 +148,7 @@
     <div id="app" v-cloak class="min-h-screen flex flex-col md:flex-row relative">
         <!-- Mobile Header -->
         <div class="md:hidden glass border-b border-[#3d2b1f] p-4 flex items-center justify-between sticky top-0 z-[60]">
-            <img src="raw.png" alt="Haluszki Shop" class="h-12 logo-glow cursor-pointer" @click="goHome">
+            <img src="ui/raw.png" alt="Haluszki Shop" class="h-12 logo-glow cursor-pointer" @click="goHome">
             <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 text-primary hover:bg-white/5 rounded-lg transition-colors">
                 <i :data-lucide="isSidebarOpen ? 'x' : 'menu'" class="w-6 h-6"></i>
             </button>
@@ -161,7 +161,7 @@
         <aside :class="['w-full md:w-80 glass border-r border-[#3d2b1f] flex flex-col h-screen fixed md:sticky top-0 left-0 z-[1000] transition-transform duration-300 ease-in-out md:translate-x-0', isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']" style="pointer-events: auto;">
             <div class="p-6 pt-24 md:pt-6 border-b border-[#3d2b1f]">
                 <div class="hidden md:flex flex-col items-center mb-6">
-                    <img src="raw.png" alt="Haluszki Shop" class="w-60 logo-glow mb-2 cursor-pointer" @click="goHome">
+                    <img src="ui/raw.png" alt="Haluszki Shop" class="w-60 logo-glow mb-2 cursor-pointer" @click="goHome">
                     <p class="text-[10px] text-primary uppercase tracking-[0.3em] font-black opacity-60 text-center">Professional Breeding Store</p>
                 </div>
                 <div class="mt-4 relative">
@@ -183,7 +183,7 @@
                         <div :class="['w-14 h-14 rounded-xl flex items-center justify-center transition-all overflow-hidden border-2', selectedDinoName === dino.name ? 'border-[#d4a358] bg-[#d4a358]/20 shadow-[0_0_15px_rgba(212,163,88,0.2)]' : 'border-[#3d2b1f] bg-[#1a1510]']">
                             <img v-if="getDinoImg(dino.name)" :src="'ico/' + getDinoImg(dino.name)" 
                                  :class="['w-12 h-12 object-contain transform group-hover:scale-110 transition-transform', { 'invert brightness-200 opacity-80': selectedDinoName !== dino.name }]">
-                            <img v-else src="raw.png" class="w-8 h-8 object-contain opacity-20 grayscale pointer-events-none">
+                            <img v-else src="ui/raw.png" class="w-8 h-8 object-contain opacity-20 grayscale pointer-events-none">
                         </div>
                             <div class="flex-1 overflow-hidden">
                                 <div class="font-black text-sm truncate uppercase tracking-tight leading-none mb-1 flex items-center gap-1.5">
@@ -229,7 +229,7 @@
                             <!-- Dynamic Scaling Dino Image (Much larger & centered) -->
                             <div class="absolute inset-0 flex items-center justify-center p-3 pb-12 z-10">
                                 <img v-if="getDinoImg(selectedDinoName)" :src="'ico/' + getDinoImg(selectedDinoName)" class="w-full h-full max-w-[92%] max-h-[92%] object-contain drop-shadow-2xl transform group-hover:scale-105 transition-all duration-700 pointer-events-none">
-                                <img v-else src="raw.png" class="w-48 h-48 object-contain opacity-5 grayscale pointer-events-none">
+                                <img v-else src="ui/raw.png" class="w-48 h-48 object-contain opacity-5 grayscale pointer-events-none">
                             </div>
 
                             <!-- Bottom Info (Tags & Name) -->
@@ -351,7 +351,7 @@
                                     <div class="mb-4 md:mb-6">
                                         <div class="flex flex-col gap-1 mb-2">
                                             <div class="flex items-center gap-2">
-                                                <img :src="'ico/' + stat.img" class="w-5 h-5 object-contain" :style="{ filter: stat.filter }">
+                                                <img :src="'ui/' + stat.img" class="w-5 h-5 object-contain" :style="{ filter: stat.filter }">
                                                 <span class="text-[10px] uppercase font-black tracking-[0.2em] text-[#a68d60]">{{ stat.label }}</span>
                                             </div>
                                             <div class="text-white font-black text-3xl md:text-4xl leading-none tracking-tighter">{{ getStatValue(stat).base }}</div>
@@ -491,7 +491,7 @@
                         
                         <div class="w-20 h-20 rounded-xl bg-[#1a1510] border border-[#d4a358]/10 flex items-center justify-center overflow-hidden transition-all relative">
                             <img v-if="getDinoImg(dino.name)" :src="'ico/' + getDinoImg(dino.name)" class="w-16 h-16 object-contain transform group-hover:scale-110 transition-all duration-700 invert brightness-200 opacity-80 group-hover:opacity-100">
-                            <img v-else src="raw.png" class="w-12 h-12 object-contain opacity-10 grayscale pointer-events-none">
+                            <img v-else src="ui/raw.png" class="w-12 h-12 object-contain opacity-10 grayscale pointer-events-none">
                             
                             <!-- Nowość Badge -->
                             <div v-if="dino.isNew" class="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-[#d4a358] text-[#1a1510] font-black text-[7.5px] leading-none tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.6)] flex items-center gap-0.5 z-10">
@@ -526,7 +526,7 @@
                                 
                                 <div class="grid grid-cols-2 gap-x-2 gap-y-1.5 w-full">
                                     <div v-for="stat in mainStats" :key="stat.key" class="flex items-center gap-1.5">
-                                        <img :src="'ico/' + stat.img" class="w-3.5 h-3.5 object-contain" :style="{ filter: stat.filter }">
+                                        <img :src="'ui/' + stat.img" class="w-3.5 h-3.5 object-contain" :style="{ filter: stat.filter }">
                                         <span class="text-[10px] font-black text-white leading-none whitespace-nowrap">{{ dino.representativeStats[stat.key] || '0' }}</span>
                                     </div>
                                 </div>
@@ -555,6 +555,7 @@
         </main>
     </div>
 
+<script src="icon_mapping.js"></script>
 <script src="ark_data.js"></script>
 
     <script>
@@ -1081,10 +1082,17 @@
                         }
                     }
 
-                    // 1. Look up in Registry
-                    if (DINO_REGISTRY[cleanName]?.img) return DINO_REGISTRY[cleanName].img;
+                    // 1. Look up in official game icon mapping
+                    if (typeof ICON_MAPPING !== 'undefined' && ICON_MAPPING[cleanName]) {
+                        return ICON_MAPPING[cleanName];
+                    }
+
+                    // 2. Fallback to Registry if provided
+                    if (typeof DINO_REGISTRY !== 'undefined' && DINO_REGISTRY[cleanName]?.img) {
+                        return DINO_REGISTRY[cleanName].img;
+                    }
                     
-                    // 2. Fuzzy matching fallback
+                    // 3. Fuzzy matching fallback
                     const searchName = cleanName.replace(/\s/g, '').toLowerCase();
                     return iconList.value.find(f => {
                         const fileBase = f.split('.')[0].replace(/_/g, '').toLowerCase();
@@ -1163,7 +1171,7 @@
 
                 onMounted(() => {
                     try {
-                        iconList.value = ICON_DATA;
+                        iconList.value = typeof ICON_MAPPING !== 'undefined' ? Object.values(ICON_MAPPING) : (typeof ICON_DATA !== 'undefined' ? ICON_DATA : []);
                         
                         // Wczytywanie danych z pliku CSV
                         Papa.parse('shop_list.csv', {

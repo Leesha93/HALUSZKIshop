@@ -179,7 +179,7 @@ const hyphenateName = (name) => {
 // =========================================================
 // APLIKACJA VUE 3
 // =========================================================
-const { createApp, ref, computed, onMounted, watchEffect, nextTick } = Vue;
+const { createApp, ref, computed, onMounted, watch, watchEffect, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -560,16 +560,356 @@ createApp({
             return dino.variants.some(v => mainStats.some(s => v[s.mutKey] && v[s.mutKey] !== ''));
         };
 
+        // =========================================================
+        // ROUTING URL, SKRÓTY GATUNKÓW I LINKI ZE SLASHAMI (/)
+        // =========================================================
+        const VOWELS = new Set(['a', 'e', 'i', 'o', 'u', 'y']);
+        const SPECIAL_OVERRIDES = {
+            'MEGALOCEROS': 'jelen'
+        };
+
+        const dinoToSlugMap = ref({});
+        const slugToDinoMap = ref({});
+
+        const initDinoSlugs = (dinos) => {
+            const list = dinos.map(item => {
+                const name = item.name;
+                if (SPECIAL_OVERRIDES[name]) {
+                    return { original: name, fixedSlug: SPECIAL_OVERRIDES[name] };
+                }
+
+                let clean = name.toUpperCase().replace(/\s+/g, ' ').trim();
+                let suffix = '';
+                if (clean.includes('-TEK')) { suffix = '-tek'; clean = clean.replace('-TEK', ''); }
+                else if (clean.endsWith(' ABERRANT') || clean.endsWith(' ABBERANT')) { suffix = '-ab'; clean = clean.replace(/ AB+ERRANT/, ''); }
+                else if (clean.includes('-S') || clean.endsWith(' - S')) { suffix = '-s'; clean = clean.replace(/-S| - S/, ''); }
+                else if (clean.includes('-X')) { suffix = '-x'; clean = clean.replace('-X', ''); }
+
+                const words = clean.trim().split(/[\s-]+/).filter(Boolean);
+                if (words.length >= 2) {
+                    if (words[0] === 'WYVERN') {
+                        return { original: name, baseCandidate: 'wyv-' + words[1].toLowerCase(), suffix };
+                    }
+                    return { original: name, baseCandidate: words[0][0].toLowerCase() + '-' + words[1].toLowerCase(), suffix };
+                }
+
+                const word = words[0].toLowerCase();
+                let cutoffs = [];
+                for (let i = 3; i < word.length; i++) {
+                    if (VOWELS.has(word[i])) {
+                        cutoffs.push(word.substring(0, i + 1));
+                    }
+                }
+                let ideal = word.startsWith('megalosaurus') ? 'megalo' : (cutoffs.find(c => c.length >= 4 && c.length <= 6) || cutoffs[0] || word.substring(0, 5));
+                return { original: name, word, ideal, suffix, cutoffs };
+            });
+
+            const s2d = {};
+            const d2s = {};
+
+            for (let i = 0; i < list.length; i++) {
+                const item = list[i];
+                if (item.fixedSlug) {
+                    s2d[item.fixedSlug] = item.original;
+                    d2s[item.original] = item.fixedSlug;
+                    continue;
+                }
+                let candidate = item.baseCandidate ? (item.baseCandidate + item.suffix) : (item.ideal + item.suffix);
+
+                let isCollision = list.some((other, idx) => {
+                    if (idx === i) return false;
+                    let otherCand = other.fixedSlug || (other.baseCandidate ? other.baseCandidate + other.suffix : other.ideal + other.suffix);
+                    return otherCand === candidate;
+                });
+
+                if (isCollision) {
+                    let found = false;
+                    for (let c of (item.cutoffs || [])) {
+                        let cand = c + item.suffix;
+                        let col = list.some((other, idx) => {
+                            if (idx === i) return false;
+                            let otherCand = other.fixedSlug || (other.baseCandidate ? other.baseCandidate + other.suffix : other.ideal + other.suffix);
+                            return otherCand === cand;
+                        });
+                        if (!col) {
+                            candidate = cand;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        for (let l = 4; l <= item.word.length; l++) {
+                            let cand = item.word.substring(0, l) + item.suffix;
+                            let col = list.some((other, idx) => idx !== i && other.word.startsWith(item.word.substring(0, l)) && other.suffix === item.suffix);
+                            if (!col) {
+                                candidate = cand;
+                                break;
+                            }
+                        }
+                    }
+                }
+                s2d[candidate] = item.original;
+                d2s[item.original] = candidate;
+            }
+
+            dinoToSlugMap.value = d2s;
+            slugToDinoMap.value = s2d;
+        };
+
+        let isApplyingUrl = false;
+        let lastUrlHash = window.location.hash;
+
+        const parseUrlParams = () => {
+            let hash = window.location.hash || '';
+            if (hash.startsWith('#')) hash = hash.substring(1);
+
+            let search = window.location.search || '';
+            if (search.startsWith('?')) search = search.substring(1);
+
+            let raw = hash || search;
+            if (!raw) return null;
+
+            let dinoQuery = '';
+            let baseIndex = 0;
+            let mutations = {};
+            let isKastrat = false;
+            let isSaddle = false;
+
+            // 1. Format ze slashami (np. #carcha-s/b1/hp255-dmg255/ks)
+            if (raw.includes('/')) {
+                const segments = raw.split('/').filter(Boolean);
+                dinoQuery = decodeURIComponent(segments[0]);
+
+                for (let i = 1; i < segments.length; i++) {
+                    const seg = segments[i].toLowerCase();
+
+                    // Sprawdzenie bazy: b1, b2...
+                    const bMatch = seg.match(/^b(\d+)$/);
+                    if (bMatch) {
+                        baseIndex = parseInt(bMatch[1], 10);
+                        continue;
+                    }
+
+                    // Sprawdzenie mutacji: hp255, dmg98, hp255-dmg255...
+                    const mutChunks = seg.split('-');
+                    let hasMut = false;
+                    for (const chunk of mutChunks) {
+                        const mMatch = chunk.match(/^(hp|stam|wh|dmg|ox|food)(\d+)$/);
+                        if (mMatch) {
+                            const statKey = mMatch[1].toUpperCase();
+                            mutations['mut ' + statKey] = mMatch[2];
+                            hasMut = true;
+                        }
+                    }
+                    if (hasMut) continue;
+
+                    // Flagi: kastrat (k), siodło (s)
+                    if (/^[ks]+$/.test(seg)) {
+                        if (seg.includes('k')) isKastrat = true;
+                        if (seg.includes('s')) isSaddle = true;
+                        continue;
+                    }
+
+                    // Połączone bX z flagami: np. b1-ks lub b1ks
+                    const combo = seg.match(/^b(\d+)-?([ks]+)$/);
+                    if (combo) {
+                        baseIndex = parseInt(combo[1], 10);
+                        if (combo[2].includes('k')) isKastrat = true;
+                        if (combo[2].includes('s')) isSaddle = true;
+                        continue;
+                    }
+                }
+            } 
+            // 2. Format query / tradycyjny (np. #slug?hp=255&k=1 lub ?dino=Rex)
+            else if (raw.includes('=') || raw.includes('?')) {
+                let qStr = raw.includes('?') ? raw.split('?')[1] : raw;
+                if (raw.includes('?') && !raw.startsWith('dino=')) {
+                    dinoQuery = decodeURIComponent(raw.split('?')[0]);
+                }
+                const sp = new URLSearchParams(qStr);
+                if (sp.has('dino')) dinoQuery = sp.get('dino');
+                if (sp.has('base')) baseIndex = parseInt(sp.get('base'), 10);
+                if (sp.has('b')) baseIndex = parseInt(sp.get('b'), 10);
+                if (sp.get('kastrat') === '1' || sp.get('k') === '1' || sp.get('kastrat') === 'true') isKastrat = true;
+                if (sp.get('siodlo') === '1' || sp.get('s') === '1' || sp.get('saddle') === '1') isSaddle = true;
+
+                mainStats.forEach(s => {
+                    const keyLower = s.key.toLowerCase();
+                    const val = sp.get(keyLower) || sp.get(s.mutKey) || sp.get('mut_' + keyLower);
+                    if (val !== null && val !== undefined && val !== '') {
+                        mutations[s.mutKey] = String(val).trim();
+                    }
+                });
+            } 
+            // 3. Czysty pojedynczy slug (np. #carcha-s lub #jelen)
+            else {
+                dinoQuery = decodeURIComponent(raw);
+            }
+
+            return { dinoQuery, baseIndex, mutations, isKastrat, isSaddle };
+        };
+
+        const buildHash = () => {
+            if (!selectedDinoName.value) return '';
+
+            const slug = dinoToSlugMap.value[selectedDinoName.value] || 
+                         selectedDinoName.value.toLowerCase().replace(/\s+/g, '-');
+            const segments = [slug];
+
+            // Wariant bazowy (jeśli inny niż 0)
+            if (preferredBaseIndex.value > 0) {
+                segments.push('b' + preferredBaseIndex.value);
+            }
+
+            // Mutacje w formacie hp255-dmg255
+            const mutParts = [];
+            mainStats.forEach(s => {
+                const val = selectedMutations.value[s.mutKey];
+                if (val !== undefined && val !== null && val !== '') {
+                    mutParts.push(s.key.toLowerCase() + val);
+                }
+            });
+            if (mutParts.length > 0) {
+                segments.push(mutParts.join('-'));
+            }
+
+            // Flagi (k = kastrat, s = siodło MAX)
+            const flags = (isKastratSelected.value ? 'k' : '') + (isSaddleSelected.value ? 's' : '');
+            if (flags) {
+                segments.push(flags);
+            }
+
+            return '#' + segments.join('/');
+        };
+
+        const updateUrl = (isNewDino = false) => {
+            if (isApplyingUrl || isLoading.value) return;
+
+            const hash = buildHash();
+            const originalTitle = 'HALUSZKIshop - Dinosaur Selector';
+
+            if (!hash) {
+                document.title = originalTitle;
+                if (window.location.hash || window.location.search.includes('dino=')) {
+                    lastUrlHash = '';
+                    const search = window.location.search.replace(/[?&]dino=[^&]+/, '').replace(/^[?&]/, '');
+                    const cleanUrl = window.location.pathname + (search ? '?' + search : '');
+                    history.replaceState(null, '', cleanUrl);
+                }
+                return;
+            }
+
+            document.title = `${selectedDinoName.value} | HALUSZKIshop`;
+
+            if (window.location.hash !== hash || window.location.search.includes('dino=')) {
+                lastUrlHash = hash;
+                const cleanPath = window.location.pathname;
+                const targetUrl = cleanPath + hash;
+                if (isNewDino) {
+                    history.pushState(null, '', targetUrl);
+                } else {
+                    history.replaceState(null, '', targetUrl);
+                }
+            }
+        };
+
+        const applyStateFromUrl = () => {
+            const parsed = parseUrlParams();
+            if (!parsed || !parsed.dinoQuery) {
+                if (selectedDinoName.value) {
+                    isApplyingUrl = true;
+                    selectedDinoName.value = "";
+                    resetFilters();
+                    document.title = 'HALUSZKIshop - Dinosaur Selector';
+                    nextTick(() => { 
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        isApplyingUrl = false; 
+                    });
+                }
+                return;
+            }
+
+            const query = parsed.dinoQuery.trim().toLowerCase();
+
+            // 1. Sprawdź w wygenerowanej mapie slugów (np. 'jelen' -> 'MEGALOCEROS', 'carcha-s' -> 'CARCHARODONTOSAURUS-S')
+            let matchedName = slugToDinoMap.value[query] || null;
+
+            // 2. Jeśli nie znaleziono po slugu, dopasuj elastycznie po pełnej nazwie
+            if (!matchedName) {
+                const found = processedData.value.find(d => {
+                    const dName = d.name.toLowerCase();
+                    return dName === query || 
+                           dName.replace(/[\s-_]/g, '') === query.replace(/[\s-_]/g, '');
+                });
+                if (found) matchedName = found.name;
+            }
+
+            if (matchedName) {
+                const matchedDino = processedData.value.find(d => d.name === matchedName);
+                if (!matchedDino) return;
+
+                isApplyingUrl = true;
+                selectedDinoName.value = matchedDino.name;
+                resetFilters();
+
+                // Poziom / Wariant bazowy
+                if (parsed.baseIndex > 0) {
+                    const variants = matchedDino.variants.filter(v => mainStats.every(s => !(v[s.mutKey] && v[s.mutKey] !== '')));
+                    if (parsed.baseIndex < variants.length) {
+                        preferredBaseIndex.value = parsed.baseIndex;
+                    }
+                }
+
+                // Kastrat i siodło
+                if (parsed.isKastrat) isKastratSelected.value = true;
+                if (parsed.isSaddle) isSaddleSelected.value = true;
+
+                // Mutacje
+                mainStats.forEach(s => {
+                    const val = parsed.mutations[s.mutKey];
+                    if (val !== undefined && val !== null && val !== '') {
+                        const available = availableMutations(s.key);
+                        const matchingAvail = available.find(a => String(a).trim() === String(val).trim());
+                        if (matchingAvail) {
+                            selectedMutations.value[s.mutKey] = matchingAvail;
+                        } else {
+                            selectedMutations.value[s.mutKey] = String(val).trim();
+                        }
+                    }
+                });
+
+                document.title = `${matchedDino.name} | HALUSZKIshop`;
+
+                nextTick(() => {
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    isApplyingUrl = false;
+                });
+            }
+        };
+
+        const handleUrlChange = () => {
+            const currentHash = (window.location.hash || '') + (window.location.search || '');
+            if (currentHash === lastUrlHash) return;
+            lastUrlHash = currentHash;
+            applyStateFromUrl();
+        };
+
         const selectDino = (name) => {
+            isApplyingUrl = true;
             selectedDinoName.value = name;
             resetFilters();
             isSidebarOpen.value = false;
+            isApplyingUrl = false;
+            updateUrl(true);
         };
 
         const goHome = () => {
+            isApplyingUrl = true;
             selectedDinoName.value = "";
             resetFilters();
             isSidebarOpen.value = false;
+            isApplyingUrl = false;
+            updateUrl(false);
         };
 
         const toggleKastrat = () => {
@@ -594,8 +934,21 @@ createApp({
             preferredBaseIndex.value = 0;
         };
 
+        // Obserwowanie zmian konfiguracji w celu aktualizacji URL
+        watch(
+            [selectedMutations, preferredBaseIndex, isKastratSelected, isSaddleSelected],
+            () => {
+                if (selectedDinoName.value && !isApplyingUrl && !isLoading.value) {
+                    updateUrl(false);
+                }
+            },
+            { deep: true }
+        );
+
         const onDataLoaded = () => {
             maxPriceFilter.value = maxAvailablePrice.value;
+            initDinoSlugs(processedData.value);
+            applyStateFromUrl();
         };
 
         const getDinoImg = (name) => {
@@ -662,6 +1015,9 @@ createApp({
         // --- Cykl życia i obserwatorzy ---
         onMounted(() => {
             try {
+                window.addEventListener('popstate', handleUrlChange);
+                window.addEventListener('hashchange', handleUrlChange);
+
                 iconList.value = typeof ICON_MAPPING !== 'undefined' ? Object.values(ICON_MAPPING) : [];
                 
                 Papa.parse('shop_list.csv', {

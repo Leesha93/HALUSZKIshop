@@ -1,28 +1,30 @@
 # HALUSZKIshop
 
-Prosty interaktywny sklep ARK (HTML + Vue 3) do przeglądania stworków, wariantów, mutacji i kalkulacji cen.
+Interaktywny sklep i kalkulator zamówień stworzeń do gry ARK: Survival Ascended / Evolved (HTML5, Tailwind CSS, Vue 3).
 
 ## Funkcje
 
-- Dynamiczny filtr gatunków i wyszukiwanie
-- Szczegóły wybranego zwierzęcia + grafika
-- Wybór mutacji i modyfikacja wymiarów parametrów
-- Obliczenia ceny na podstawie poziomu i mutacji
-- Kopiowanie gotowego zamówienia do schowka
+- **Dynamiczne filtrowanie i wyszukiwanie**: po nazwie, typie stworzenia (Bojowy, Użytkowy, Latający, Wodny, Towarzysz), nowościach i cenie maksymalnej.
+- **Kalkulator mutacji i wariantów**: wybór poziomów bazowych, dynamiczne dodawanie punktów mutacji (HP, Stamina, Waga, DMG, Tlen, Jedzenie).
+- **Automatyczna wycena**: precyzyjne skalowanie cen na podstawie poziomów, mutacji, zniżki na kastrata (-20%) oraz opcji siodła MAX ARMOR (+600 DD).
+- **Kopiowanie gotowego zamówienia**: jednym kliknięciem generuje sformatowany tekst gotowy do wklejenia na Discordzie.
+- **Responsywny interfejs**: przystosowany do urządzeń mobilnych oraz ekranów desktopowych z dedykowanym motywem graficznym.
 
-## Struktura
+## Struktura projektu
 
-- `ark_shop.html` - główna aplikacja UI
-- `ark_data.js` - baza cen/specyfikacji stworzeń (DINO_REGISTRY + ICON_DATA)
-- `shop_list.csv` - dane wariantów i wartości bazowe
-- `ico/` - ikony dla poszczególnych gatunków
+- `index.html` – główny szkielet interfejsu aplikacji
+- `app.js` – logika aplikacji Vue 3 (reaktywność, filtry, kalkulator cen, parsowanie CSV)
+- `style.css` – style wizualne, motyw, paski przewijania i animacje (shimmer, hover, transitions)
+- `icon_mapping.js` – baza powiązań nazw stworzeń z ikonami gry
+- `ark_data.js` – rejestr cen minimalnych i specyfikacji wariantów (`DINO_REGISTRY`)
+- `shop_list.csv` – baza danych wariantów i statystyk stworzeń
+- `ico/` – ikony portretowe poszczególnych gatunków
+- `ui/` – grafiki interfejsu użytkownika (logo `raw.png`, ikony statystyk `30px-*.webp`)
+- `aktualizuj_sklep.bat` – skrypt wsadowy do wysyłania aktualizacji na GitHuba
+- `generuj_screeny.bat` – automatyczne generowanie podglądów kategorii w wysokiej rozdzielczości na Discorda
 
 ## Uruchomienie
 
-1. Otwórz `ark_shop.html` w przeglądarce (lokalnie). 2. Zobacz listę, wybierz stworzenie i dopasuj parametry.
-
-## Propozycje rozwoju
-
-- REST API dla ofert w czasie rzeczywistym
-- eksport/import konfiguracji zamówienia JSON
-- wersja Multiuser z koszykiem i historią zamówień
+1. Otwórz plik `index.html` bezpośrednio w przeglądarce internetowej lub uruchom lokalny serwer HTTP.
+2. Wybierz stworzenie z listy lub skorzystaj z wyszukiwarki.
+3. Skonfiguruj parametry, mutacje oraz opcje dodatkowe, a następnie kliknij **„Skopiuj zamówienie”**.

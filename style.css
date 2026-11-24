@@ -1,0 +1,256 @@
+:root {
+    --primary: #d4a358;
+    --primary-dark: #c4924a;
+    --bg-dark: #1a1510;
+    --card-bg: #2a221a;
+    --text-cream: #f5f5f5;
+    --text-muted: #a68d60;
+    --accent-red: #8b2c2c;
+    --ribbon-dark: #3d2b1f;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-cream);
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    background-image: 
+        radial-gradient(circle at 10% 10%, rgba(212, 163, 88, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(212, 163, 88, 0.03) 0%, transparent 40%);
+    background-attachment: fixed;
+}
+
+.glass {
+    background: rgba(42, 34, 26, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 163, 88, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(26, 21, 16, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+    border-radius: 10px;
+}
+
+[v-cloak] {
+    display: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #1a1510;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 0 25px rgba(212, 163, 88, 0.4);
+}
+
+.logo-glow {
+    filter: drop-shadow(0 0 15px rgba(212, 163, 88, 0.2));
+}
+
+.mut-checkbox-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 163, 88, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.mut-checkbox-inline:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(212, 163, 88, 0.3);
+}
+
+.mut-checkbox-inline.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #1a1510;
+}
+
+.glass-stat {
+    background: rgba(42, 34, 26, 0.4);
+    border: 1px solid rgba(212, 163, 88, 0.1);
+    transition: all 0.3s ease;
+}
+
+.checkbox-box-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(212, 163, 88, 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.mut-checkbox-inline.active .checkbox-box-small {
+    border-color: #1a1510;
+}
+
+.checkbox-box {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(212, 163, 88, 0.4);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.active .checkbox-box {
+    border-color: rgba(26, 21, 16, 0.6);
+    background: rgba(26, 21, 16, 0.1);
+}
+
+/* Skeleton Shimmer */
+.shimmer {
+    background: linear-gradient(90deg, 
+        rgba(212, 163, 88, 0.05) 25%, 
+        rgba(212, 163, 88, 0.12) 50%, 
+        rgba(212, 163, 88, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer-animation 1.5s infinite linear;
+}
+
+@keyframes shimmer-animation {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* List Transitions */
+.list-enter-active, .list-leave-active {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-enter-from, .list-leave-to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+}
+
+.list-move {
+    transition: transform 0.4s ease;
+}
+
+/* Card/Content Transitions */
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+}
+
+.slide-up-enter-active {
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.slide-up-enter-from {
+    opacity: 0;
+    transform: translateY(40px);
+}
+
+/* Button & Card Micro-hover */
+.hover-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 30px -5px rgba(212, 163, 88, 0.2);
+    border-color: rgba(212, 163, 88, 0.4) !important;
+}
+
+.btn-hover {
+    transition: all 0.2s ease;
+}
+
+.btn-hover:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+.btn-hover:active {
+    transform: translateY(0);
+}
+
+/* Price Range Slider */
+.price-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+.price-slider:focus {
+    outline: none;
+}
+
+.price-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(212, 163, 88, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(212, 163, 88, 0.1);
+}
+
+.price-slider::-webkit-slider-thumb {
+    border: 2px solid #1a1510;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #d4a358;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -6px;
+    box-shadow: 0 0 10px rgba(212, 163, 88, 0.5);
+    transition: all 0.2s ease;
+}
+
+.price-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Mozilla (Firefox / Zen Browser) Styles */
+.price-slider::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(212, 163, 88, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(212, 163, 88, 0.1);
+}
+
+.price-slider::-moz-range-thumb {
+    border: 2px solid #1a1510;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #d4a358;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(212, 163, 88, 0.5);
+    transition: all 0.2s ease;
+}
+
+.price-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+}

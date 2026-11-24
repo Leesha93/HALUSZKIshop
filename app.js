@@ -657,7 +657,14 @@ createApp({
         };
 
         let isApplyingUrl = false;
-        let lastUrlHash = window.location.hash;
+        let lastUrlHash = '';
+
+        const getBasePath = () => {
+            let p = window.location.pathname;
+            p = p.replace(/\/d\/.*$/, '/').replace(/\/index\.html$/, '/');
+            if (!p.endsWith('/')) p += '/';
+            return p;
+        };
 
         const parseUrlParams = () => {
             let hash = window.location.hash || '';
@@ -666,21 +673,30 @@ createApp({
             let search = window.location.search || '';
             if (search.startsWith('?')) search = search.substring(1);
 
-            let raw = hash || search;
-            if (!raw) return null;
+            let pathname = window.location.pathname || '';
+            let pathSlug = '';
+            if (pathname.includes('/d/')) {
+                const part = pathname.split('/d/')[1];
+                pathSlug = part.split('/')[0];
+            }
 
-            let dinoQuery = '';
+            if (!hash && !search && !pathSlug) return null;
+
+            let dinoQuery = pathSlug ? decodeURIComponent(pathSlug) : '';
             let baseIndex = 0;
             let mutations = {};
             let isKastrat = false;
             let isSaddle = false;
 
-            // 1. Format ze slashami (np. #carcha-s/b1/hp255-dmg255/ks)
-            if (raw.includes('/')) {
-                const segments = raw.split('/').filter(Boolean);
-                dinoQuery = decodeURIComponent(segments[0]);
+            if (hash) {
+                const segments = hash.split('/').filter(Boolean);
+                let startIndex = 0;
+                if (!dinoQuery && segments.length > 0) {
+                    dinoQuery = decodeURIComponent(segments[0]);
+                    startIndex = 1;
+                }
 
-                for (let i = 1; i < segments.length; i++) {
+                for (let i = startIndex; i < segments.length; i++) {
                     const seg = segments[i].toLowerCase();
 
                     // Sprawdzenie bazy: b1, b2...
@@ -690,7 +706,7 @@ createApp({
                         continue;
                     }
 
-                    // Sprawdzenie mutacji: hp255, dmg98, hp255-dmg255...
+                    // Sprawdzenie mutacji: hp255, dmg98...
                     const mutChunks = seg.split('-');
                     let hasMut = false;
                     for (const chunk of mutChunks) {
@@ -718,14 +734,13 @@ createApp({
                         if (combo[2].includes('s')) isSaddle = true;
                         continue;
                     }
+
+                    if (!dinoQuery) {
+                        dinoQuery = decodeURIComponent(seg);
+                    }
                 }
-            } 
-            // 2. Format query / tradycyjny (np. #slug?hp=255&k=1 lub ?dino=Rex)
-            else if (raw.includes('=') || raw.includes('?')) {
-                let qStr = raw.includes('?') ? raw.split('?')[1] : raw;
-                if (raw.includes('?') && !raw.startsWith('dino=')) {
-                    dinoQuery = decodeURIComponent(raw.split('?')[0]);
-                }
+            } else if (search) {
+                let qStr = search.includes('?') ? search.split('?')[1] : search;
                 const sp = new URLSearchParams(qStr);
                 if (sp.has('dino')) dinoQuery = sp.get('dino');
                 if (sp.has('base')) baseIndex = parseInt(sp.get('base'), 10);
@@ -740,28 +755,37 @@ createApp({
                         mutations[s.mutKey] = String(val).trim();
                     }
                 });
-            } 
-            // 3. Czysty pojedynczy slug (np. #carcha-s lub #jelen)
-            else {
-                dinoQuery = decodeURIComponent(raw);
             }
 
             return { dinoQuery, baseIndex, mutations, isKastrat, isSaddle };
         };
 
-        const buildHash = () => {
-            if (!selectedDinoName.value) return '';
+        const updateUrl = (isNewDino = false) => {
+            if (isApplyingUrl || isLoading.value) return;
+
+            const originalTitle = 'Haluszki Shop — Sklepik Stworzeń ARK | Mroczne Zakamarki';
+            const basePath = getBasePath();
+
+            if (!selectedDinoName.value) {
+                document.title = originalTitle;
+                const cleanUrl = basePath;
+                if (window.location.pathname !== cleanUrl || window.location.hash || window.location.search) {
+                    lastUrlHash = cleanUrl;
+                    history.replaceState(null, '', cleanUrl);
+                }
+                return;
+            }
 
             const slug = dinoToSlugMap.value[selectedDinoName.value] || 
                          selectedDinoName.value.toLowerCase().replace(/\s+/g, '-');
-            const segments = [slug];
 
-            // Wariant bazowy (jeśli inny niż 0)
+            document.title = `${selectedDinoName.value} | HALUSZKIshop`;
+
+            const segments = [];
             if (preferredBaseIndex.value > 0) {
                 segments.push('b' + preferredBaseIndex.value);
             }
 
-            // Mutacje w formacie hp255-dmg255
             const mutParts = [];
             mainStats.forEach(s => {
                 const val = selectedMutations.value[s.mutKey];
@@ -773,38 +797,17 @@ createApp({
                 segments.push(mutParts.join('-'));
             }
 
-            // Flagi (k = kastrat, s = siodło MAX)
             const flags = (isKastratSelected.value ? 'k' : '') + (isSaddleSelected.value ? 's' : '');
             if (flags) {
                 segments.push(flags);
             }
 
-            return '#' + segments.join('/');
-        };
+            const extraHash = segments.length > 0 ? '#' + segments.join('/') : '';
+            const targetUrl = basePath + 'd/' + slug + '/' + extraHash;
 
-        const updateUrl = (isNewDino = false) => {
-            if (isApplyingUrl || isLoading.value) return;
-
-            const hash = buildHash();
-            const originalTitle = 'HALUSZKIshop - Dinosaur Selector';
-
-            if (!hash) {
-                document.title = originalTitle;
-                if (window.location.hash || window.location.search.includes('dino=')) {
-                    lastUrlHash = '';
-                    const search = window.location.search.replace(/[?&]dino=[^&]+/, '').replace(/^[?&]/, '');
-                    const cleanUrl = window.location.pathname + (search ? '?' + search : '');
-                    history.replaceState(null, '', cleanUrl);
-                }
-                return;
-            }
-
-            document.title = `${selectedDinoName.value} | HALUSZKIshop`;
-
-            if (window.location.hash !== hash || window.location.search.includes('dino=')) {
-                lastUrlHash = hash;
-                const cleanPath = window.location.pathname;
-                const targetUrl = cleanPath + hash;
+            const currentFull = window.location.pathname + window.location.hash;
+            if (currentFull !== targetUrl) {
+                lastUrlHash = targetUrl;
                 if (isNewDino) {
                     history.pushState(null, '', targetUrl);
                 } else {
@@ -888,9 +891,9 @@ createApp({
         };
 
         const handleUrlChange = () => {
-            const currentHash = (window.location.hash || '') + (window.location.search || '');
-            if (currentHash === lastUrlHash) return;
-            lastUrlHash = currentHash;
+            const current = window.location.pathname + (window.location.hash || '') + (window.location.search || '');
+            if (current === lastUrlHash) return;
+            lastUrlHash = current;
             applyStateFromUrl();
         };
 
@@ -1007,6 +1010,11 @@ createApp({
             
             if (mutsText) text += mutsText;
             if (extras) text += extras;
+
+            const slug = dinoToSlugMap.value[selectedDinoName.value] || 
+                         selectedDinoName.value.toLowerCase().replace(/\s+/g, '-');
+            const previewUrl = `https://leesha93.github.io/HALUSZKIshop/d/${slug}/`;
+            text += `🔗 **Podgląd:** ${previewUrl}\n`;
             
             navigator.clipboard.writeText(text.trim());
             showToast("Skopiowano!");

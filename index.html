@@ -16,10 +16,18 @@
     <meta property="og:image" content="https://leesha93.github.io/HALUSZKIshop/ui/raw.png">
 
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Haluszki Shop — Sklepik Stworzeń ARK | Mroczne Zakamarki">
     <meta name="twitter:description" content="Oferta stworzeń tribu Haluszki na serwerze Mroczne Zakamarki. Sprawdź dostępne dinozaury, wybierz wariant i skopiuj zamówienie prosto na Discorda!">
     <meta name="twitter:image" content="https://leesha93.github.io/HALUSZKIshop/ui/raw.png">
+
+    <script>
+        (function() {
+            var p = window.location.pathname;
+            var b = p.includes('/HALUSZKIshop/') ? '/HALUSZKIshop/' : '/';
+            document.write('<base href="' + b + '">');
+        })();
+    </script>
 
     <link rel="icon" type="image/png" href="ui/raw.png">
     <script src="https://cdn.tailwindcss.com"></script>

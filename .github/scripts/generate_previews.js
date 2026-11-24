@@ -251,18 +251,30 @@ function main() {
 
     <link rel="icon" type="image/png" href="../../ui/raw.png">
 
-    <!-- Natychmiastowe przekierowanie z przekazaniem parametrów mutacji -->
-    <meta http-equiv="refresh" content="0; url=../../#${slug}">
+    <!-- Natychmiastowe przekierowanie z zachowaniem mutacji, parametrów i flag -->
     <script>
         (function() {
-            var target = '../../#' + '${slug}';
-            var search = window.location.search;
-            if (search) {
-                target += (search.startsWith('?') ? '' : '?') + search;
+            var slug = '${slug}';
+            var hash = window.location.hash || '';
+            var search = window.location.search || '';
+
+            var extra = '';
+            if (hash) {
+                var clean = hash.startsWith('#') ? hash.substring(1) : hash;
+                if (clean.startsWith('/')) clean = clean.substring(1);
+                if (clean.startsWith(slug + '/')) clean = clean.substring(slug.length + 1);
+                if (clean && clean !== slug) {
+                    extra = '/' + clean;
+                }
             }
+
+            var target = '../../#' + slug + extra + search;
             window.location.replace(target);
         })();
     </script>
+    <noscript>
+        <meta http-equiv="refresh" content="0; url=../../#${slug}">
+    </noscript>
     <style>
         body {
             background-color: #14100c;

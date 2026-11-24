@@ -1,0 +1,47 @@
+name: Deploy GitHub Pages & Generate Previews
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Uprawnienia do publikacji na GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Blokada równoległych wdrożeń
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz repozytorium (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Przygotuj Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Wygeneruj podglądy stworzeń
+        run: node .github/scripts/generate_previews.js
+
+      - name: Konfiguracja GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Pakowanie plików strony (Upload artifact)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Publikacja na GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
